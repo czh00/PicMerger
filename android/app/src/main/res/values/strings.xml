@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">圖片合併</string>
+    <string name="title_activity_main">圖片合併</string>
+    <string name="package_name">com.antigravity.pic</string>
+    <string name="custom_url_scheme">com.antigravity.pic</string>
+</resources>

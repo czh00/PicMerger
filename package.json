@@ -1,0 +1,25 @@
+{
+  "name": "pic",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "vite": "^6.0.11",
+    "vite-plugin-top-level-await": "^1.6.0",
+    "vite-plugin-wasm": "^3.6.0"
+  },
+  "dependencies": {
+    "@capacitor-community/media": "^9.1.0",
+    "@capacitor/android": "^8.3.2",
+    "@capacitor/cli": "^8.3.2",
+    "@capacitor/core": "^8.3.2",
+    "@capacitor/filesystem": "^8.1.2",
+    "@capacitor/share": "^8.0.1",
+    "@capacitor/toast": "^8.0.1"
+  }
+}

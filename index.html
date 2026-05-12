@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>極簡圖片合併 Pro - 不失真拼接</title>
+    <meta name="description" content="高品質、不失真圖片合併工具，支援多種尺寸任意拼接。">
+    <link rel="stylesheet" href="style.css" />
+    <link rel="manifest" href="manifest.json" />
+    <meta name="theme-color" content="#1a1a2e" />
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
+</head>
+<body>
+    <div id="app">
+        <header>
+            <h1>圖片合併 <span>v1.0.0</span></h1>
+            <p>自由拼接，不失真，無上限</p>
+        </header>
+
+        <main>
+            <div class="control-panel">
+                <section class="upload-section">
+                    <div id="main-drop-zone" class="drop-zone primary-drop">
+                        <div class="placeholder">
+                            <span class="icon">➕</span>
+                            <p>點擊或拖放圖片至此</p>
+                            <small>支援多檔案選取</small>
+                        </div>
+                        <input type="file" id="main-file-input" accept="image/*" multiple hidden />
+                    </div>
+                </section>
+
+                <section class="file-list-section">
+                    <label>已選取圖片 (<span id="file-count">0</span>)</label>
+                    <div id="image-list" class="image-list">
+                        <!-- 動態插入圖片項目 -->
+                    </div>
+                </section>
+
+                <section class="settings">
+                    <div id="grid-settings" class="setting-item">
+                        <label>網格列數 (Columns)</label>
+                        <div class="input-with-stepper">
+                            <input type="number" id="grid-cols" value="1" min="1" max="10" />
+                        </div>
+                    </div>
+                    <div class="setting-item">
+                        <label>對齊方式</label>
+                        <select id="alignment">
+                            <option value="start">靠左 / 靠頂</option>
+                            <option value="center" selected>置中對齊</option>
+                            <option value="end">靠右 / 靠底</option>
+                        </select>
+                    </div>
+                    
+                    <!-- 輸出尺寸設定 (簡化版) -->
+                    <div class="setting-group output-settings">
+                        <label class="group-label">輸出尺寸設定 (等比例鎖定)</label>
+                        <div class="mode-value-group">
+                            <select id="output-mode" class="mode-select">
+                                <option value="scale">縮放百分比 (%)</option>
+                                <option value="width">指定寬度 (px)</option>
+                                <option value="height">指定高度 (px)</option>
+                            </select>
+                            <span id="output-value-label">100</span>
+                            <input type="range" id="output-value" value="100" min="1" max="100" />
+                        </div>
+                    </div>
+
+                    <div class="setting-item">
+                        <label>背景填充</label>
+                        <input type="color" id="bg-color" value="#000000" />
+                    </div>
+                    <div class="setting-item" style="display: none;">
+                        <label>縮放模式</label>
+                        <select id="scale-mode">
+                            <option value="original" selected>原始尺寸 (不失真 / 不縮放)</option>
+                            <option value="fit-first">符合第一張圖片寬/高</option>
+                        </select>
+                    </div>
+                </section>
+
+                <div class="actions">
+                    <button id="btn-install" class="secondary" style="display: none; background: #3d3d5c; color: white; border: none; padding: 10px; border-radius: 12px; margin-bottom: 10px; cursor: pointer;">📲 安裝為手機 App (推薦)</button>
+                    <button id="btn-merge" class="primary" disabled>生成合併圖</button>
+                    <button id="btn-reset">清空全部</button>
+                </div>
+            </div>
+
+            <div class="preview-container">
+                <div class="preview-header">
+                    <h2>畫布預覽</h2>
+                    <span id="preview-info">請上傳圖片以開始</span>
+                </div>
+                <div id="canvas-wrapper" title="點擊以拖拽排序圖片">
+                    <canvas id="merge-canvas"></canvas>
+                    <div id="canvas-hint">點擊畫布開啟拖拽排序 🔄</div>
+                </div>
+                <div class="download-section" style="display: none;">
+                    <button id="btn-save" class="btn-download">💾 直接儲存至文件資料夾</button>
+                    <button id="btn-share" class="btn-download" style="margin-top: 10px; background: linear-gradient(90deg, #6200ea, #7c4dff); box-shadow: none;">🔗 分享圖片至其他 App</button>
+                </div>
+            </div>
+        </main>
+
+        <!-- 排序 Modal -->
+        <div id="sort-modal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>拖拽調整圖片順序</h3>
+                    <button id="close-modal">✕</button>
+                </div>
+                <div class="modal-body">
+                    <p class="modal-hint">長按或拖動圖片來更換順序</p>
+                    <div id="sort-list" class="sort-list">
+                        <!-- 動態插入排序項目 -->
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button id="btn-apply-sort" class="primary">完成並更新預覽</button>
+                </div>
+            </div>
+        </div>
+
+        <footer>
+            <p>&copy; 2026 Antigravity Studio. Portable Pro Version.</p>
+        </footer>
+    </div>
+    <script type="module" src="main.js"></script>
+</body>
+</html>
