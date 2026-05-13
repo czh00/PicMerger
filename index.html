@@ -21,13 +21,13 @@
         <main>
             <div class="control-panel">
                 <section class="upload-section">
-                    <div id="main-drop-zone" class="drop-zone primary-drop" onclick="console.log('Click detected'); document.getElementById('main-file-input').click()">
+                    <div id="main-drop-zone" class="drop-zone primary-drop">
                         <div class="placeholder">
                             <span class="icon">➕</span>
                             <p>點擊或拖放圖片至此</p>
                             <small>支援多檔案選取</small>
                         </div>
-                        <input type="file" id="main-file-input" accept="image/*" multiple hidden onchange="if(window.handleFiles) window.handleFiles(this.files)" />
+                        <input type="file" id="main-file-input" accept="image/*" multiple hidden />
                     </div>
                 </section>
 
