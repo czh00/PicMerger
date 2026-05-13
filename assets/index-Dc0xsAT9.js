@@ -63,7 +63,7 @@
     };
     console.log("DEBUG: main.js loading...");
     window.handleFiles = B;
-    let k, U, q, G;
+    let k, U, G, q;
     async function J() {}
     let R = null;
     const n = {
@@ -109,7 +109,11 @@
         }, console.log("Elements initialized:", Object.keys(e).filter((t)=>e[t]));
     }
     async function K() {
-        console.log("PicMerger v1.0.5 Initializing..."), J(), T(), X(), console.log("Event listeners attached.");
+        if (console.log("PicMerger v1.0.5 Initializing..."), J(), T(), e.btnShare) {
+            const t = !!navigator.share;
+            e.btnShare.disabled = !t, t || (e.btnShare.title = "當前瀏覽器不支援分享功能", e.btnShare.style.opacity = "0.4");
+        }
+        X(), console.log("Event listeners attached.");
         try {
             const { default: t, merge_images: a } = await z(async ()=>{
                 const { default: o, merge_images: r } = await import("./pic_wasm-C60cSF7V.js");
@@ -226,10 +230,10 @@
     function Y() {
         if (e.gridColsInput) {
             const t = n.images.length || 1;
-            e.gridColsInput.max = t, n.gridCols > t && (n.gridCols = t, e.gridColsInput.value = t);
+            console.log("Updating Grid Max to:", t), e.gridColsInput.max = t, n.gridCols > t && (n.gridCols = t, e.gridColsInput.value = t);
             const a = document.getElementById("grid-cols-value");
             a && (a.textContent = n.gridCols);
-        }
+        } else console.warn("Grid input not found during update");
     }
     function M() {
         if (!n.baseWidth || !n.baseHeight) return;
@@ -390,7 +394,7 @@
                     data: a,
                     directory: U.Documents,
                     recursive: !0
-                }), await G.show({
+                }), await q.show({
                     text: `儲存成功！路徑：文件/PicMerger/${o}`,
                     duration: "long"
                 }), e.btnSave.textContent = "✅ 已儲存至文件", alert(`儲存成功！
@@ -418,7 +422,7 @@
                     data: o,
                     directory: U.Cache
                 });
-                await q.share({
+                await G.share({
                     title: "分享合併圖片",
                     url: r.uri,
                     dialogTitle: "分享圖片至..."
