@@ -335,6 +335,12 @@ async function handleFiles(files) {
         updateUI();
         elements.previewInfo.textContent = `已載入 ${state.images.length} 張圖片。`;
         elements.downloadSection.style.display = 'none';
+        
+        // 強制延遲觸發預覽，確保 DOM 已就緒
+        setTimeout(() => {
+            console.log("Auto-triggering preview...");
+            previewRender();
+        }, 100);
     }
 }
 

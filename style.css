@@ -201,32 +201,33 @@ input[type="number"], input[type="range"] {
 
 .button-group button {
     flex: 1;
-    background: transparent;
-    border: none;
-    color: #888;
-    padding: 8px 4px;
+    background: rgba(255, 255, 255, 0.05); /* 未選中時為深背景 */
+    border: 1px solid transparent;
+    color: var(--text-muted);
+    padding: 10px 4px;
     border-radius: 8px;
     cursor: pointer;
-    font-size: 14px;
-    transition: all 0.2s;
+    font-size: 13px;
+    font-weight: 500;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     white-space: nowrap;
 }
 
-.button-group button:hover {
+.button-group button:hover:not(.active) {
+    background: rgba(255, 255, 255, 0.1);
     color: white;
-    background: rgba(255, 255, 255, 0.05);
 }
 
 .button-group button.active {
-    background: linear-gradient(135deg, #3b82f6, #2563eb);
-    color: white;
-    font-weight: bold;
-    box-shadow: 0 0 15px rgba(59, 130, 246, 0.5);
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    background: #3b82f6 !important; /* 強制亮藍色 */
+    color: white !important;
+    font-weight: bold !important;
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.3);
 }
 
 .button-group button:not(.active) {
-    color: rgba(255, 255, 255, 0.5);
+    color: #94a3b8;
 }
 
 .segment-group {
