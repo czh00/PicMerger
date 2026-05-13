@@ -248,6 +248,13 @@ button {
     border: none;
 }
 
+button:disabled {
+    opacity: 0.3 !important;
+    cursor: not-allowed !important;
+    filter: grayscale(0.8) !important;
+    pointer-events: none !important;
+}
+
 button.primary {
     background: var(--primary);
     color: white;

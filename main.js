@@ -24,7 +24,8 @@ const state = {
     outputMode: 'scale', // 輸出模式: scale (比例), width (定寬), height (定高)
     baseWidth: 0, // 原始總寬度
     baseHeight: 0, // 原始總高度
-    format: 'image/png' // 輸出格式
+    format: 'image/png', // 輸出格式
+    canShare: !!navigator.share // 預先偵測分享功能
 };
 
 let elements = {};
@@ -66,11 +67,11 @@ async function init() {
     
     // 偵測分享功能是否可用
     if (elements.btnShare) {
-        const canShare = !!navigator.share;
-        elements.btnShare.disabled = !canShare;
-        if (!canShare) {
+        elements.btnShare.disabled = !state.canShare;
+        if (!state.canShare) {
             elements.btnShare.title = "當前瀏覽器不支援分享功能";
             elements.btnShare.style.opacity = "0.4";
+            elements.btnShare.style.pointerEvents = "none";
         }
     }
 
@@ -770,6 +771,7 @@ async function render() {
                 const url = URL.createObjectURL(blob);
                 
                 elements.downloadSection.style.display = 'block';
+                if (elements.btnShare) elements.btnShare.disabled = !state.canShare;
                 elements.previewInfo.textContent = `JS 引擎處理完成！解析度: ${elements.canvas.width}x${elements.canvas.height}`;
                 elements.btnMerge.disabled = false;
                 syncOutputValue();
@@ -794,6 +796,7 @@ async function render() {
             elements.ctx.drawImage(resultImg, 0, 0);
             
             elements.downloadSection.style.display = 'block';
+            if (elements.btnShare) elements.btnShare.disabled = !state.canShare;
             elements.previewInfo.textContent = `高品質 Rust 引擎處理完成！解析度: ${resultImg.width}x${resultImg.height} (耗時 ${(endTime - startTime).toFixed(0)}ms)`;
             elements.btnMerge.disabled = false;
             
