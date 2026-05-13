@@ -65,13 +65,14 @@ async function init() {
     loadPlugins(); 
     initElements();
     
-    // 偵測分享功能是否可用
+    // 僅在行動端且支援分享時才顯示按鈕
     if (elements.btnShare) {
-        elements.btnShare.disabled = !state.canShare;
-        if (!state.canShare) {
-            elements.btnShare.title = "當前瀏覽器不支援分享功能";
-            elements.btnShare.style.opacity = "0.4";
-            elements.btnShare.style.pointerEvents = "none";
+        const isNative = window.Capacitor && window.Capacitor.isNativePlatform();
+        if (isNative && state.canShare) {
+            elements.btnShare.style.setProperty('display', 'block', 'important');
+            elements.btnShare.disabled = false;
+        } else {
+            elements.btnShare.style.setProperty('display', 'none', 'important');
         }
     }
 
@@ -904,8 +905,14 @@ async function shareImageToDevice() {
     } finally {
         setTimeout(() => {
             if (elements.btnShare) {
-                elements.btnShare.disabled = !state.canShare;
-                elements.btnShare.textContent = '🔗 分享圖片至其他 App';
+                // 恢復時依然保持隱藏判斷
+                const isNative = window.Capacitor && window.Capacitor.isNativePlatform();
+                if (!isNative || !state.canShare) {
+                    elements.btnShare.style.setProperty('display', 'none', 'important');
+                } else {
+                    elements.btnShare.disabled = false;
+                    elements.btnShare.textContent = '🔗 分享圖片至其他 App';
+                }
             }
         }, 3000);
     }

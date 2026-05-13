@@ -256,6 +256,14 @@ button:disabled {
     pointer-events: none !important;
 }
 
+#btn-share {
+    display: none !important; /* 網頁版預設徹底隱藏 */
+}
+
+.capacitor-native #btn-share {
+    display: none !important; /* 預設隱藏，待邏輯觸發 */
+}
+
 button.primary {
     background: var(--primary);
     color: white;
