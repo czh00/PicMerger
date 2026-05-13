@@ -4,7 +4,11 @@ import { Toast } from '@capacitor/toast';
 import initWasm, { merge_images } from './pkg-wasm/pic_wasm.js';
 
 // Initialize Rust Wasm Engine
-await initWasm();
+try {
+    await initWasm();
+} catch (e) {
+    console.warn("WASM 初始化跳過:", e);
+}
 
 // 全域狀態管理
 const state = {
@@ -626,14 +630,32 @@ async function render() {
 
         // Call Rust Engine
         const startTime = performance.now();
-        const mergedPng = merge_images(
-            combinedData,
-            offsets,
-            dirMap[state.direction],
-            alignMap[state.alignment],
-            state.gridCols,
-            r, g, b
-        );
+        let mergedPng;
+        try {
+            mergedPng = merge_images(
+                combinedData,
+                offsets,
+                dirMap[state.direction],
+                alignMap[state.alignment],
+                state.gridCols,
+                r, g, b
+            );
+        } catch (wasmErr) {
+            if (wasmErr.message === "WASM_MISSING" || wasmErr.toString().includes("WASM_MISSING")) {
+                console.info("使用 JS Fallback 引擎渲染...");
+                previewRender(); // 呼叫 Canvas 預覽渲染
+                const dataUrl = elements.canvas.toDataURL('image/png');
+                const blob = await (await fetch(dataUrl)).blob();
+                const url = URL.createObjectURL(blob);
+                
+                elements.downloadSection.style.display = 'block';
+                elements.previewInfo.textContent = `JS 引擎處理完成！解析度: ${elements.canvas.width}x${elements.canvas.height}`;
+                elements.btnMerge.disabled = false;
+                syncOutputValue();
+                return;
+            }
+            throw wasmErr;
+        }
         const endTime = performance.now();
         console.log(`Rust 拼接耗時: ${(endTime - startTime).toFixed(2)}ms`);
 
