@@ -72,7 +72,7 @@
         alignment: "center",
         scaleMode: "original",
         bgColor: "#000000",
-        gridCols: 2,
+        gridCols: 1,
         outputScale: 100,
         outputMode: "scale",
         baseWidth: 0,
