@@ -140,31 +140,31 @@
         })) : console.error("Drop zone or file input not found!"), e.gridColsInput && e.gridColsInput.addEventListener("input", (t)=>{
             a.gridCols = parseInt(t.target.value) || 1;
             const r = document.getElementById("grid-cols-value");
-            r && (r.textContent = a.gridCols), w();
+            r && (r.textContent = a.gridCols), y();
         });
         const n = document.getElementById("alignment-group");
         n && n.querySelectorAll("button").forEach((t)=>{
             t.addEventListener("click", ()=>{
-                a.alignment = t.dataset.value, n.querySelectorAll("button").forEach((r)=>r.classList.remove("active")), t.classList.add("active"), w();
+                a.alignment = t.dataset.value, n.querySelectorAll("button").forEach((r)=>r.classList.remove("active")), t.classList.add("active"), y();
             });
         });
         const o = document.getElementById("output-mode-group");
         o && o.querySelectorAll("button").forEach((t)=>{
             t.addEventListener("click", ()=>{
-                a.outputMode = t.dataset.value, a.outputScale = 100, o.querySelectorAll("button").forEach((r)=>r.classList.remove("active")), t.classList.add("active"), M(), w();
+                a.outputMode = t.dataset.value, a.outputScale = 100, o.querySelectorAll("button").forEach((r)=>r.classList.remove("active")), t.classList.add("active"), M(), y();
             });
         }), e.outputValueInput && e.outputValueInput.addEventListener("input", (t)=>{
             const r = parseFloat(t.target.value);
             if (!r) return;
             a.outputMode === "scale" ? a.outputScale = r : a.outputMode === "width" && a.baseWidth ? a.outputScale = r / a.baseWidth * 100 : a.outputMode === "height" && a.baseHeight && (a.outputScale = r / a.baseHeight * 100);
             const i = document.getElementById("output-value-label");
-            i && (i.textContent = Math.round(r) + (a.outputMode === "scale" ? "%" : "px")), w();
+            i && (i.textContent = Math.round(r) + (a.outputMode === "scale" ? "%" : "px")), y();
         }), e.alignmentSelect && e.alignmentSelect.addEventListener("change", (t)=>{
-            a.alignment = t.target.value, w();
+            a.alignment = t.target.value, y();
         }), e.scaleModeSelect && e.scaleModeSelect.addEventListener("change", (t)=>{
-            a.scaleMode = t.target.value, w();
+            a.scaleMode = t.target.value, y();
         }), e.bgColorInput && e.bgColorInput.addEventListener("change", (t)=>{
-            a.bgColor = t.target.value, w();
+            a.bgColor = t.target.value, y();
         }), e.btnMerge && e.btnMerge.addEventListener("click", async ()=>{
             a.images.length < 2 || (e.btnMerge.disabled = !0, e.btnMerge.textContent = "正在渲染畫布...", setTimeout(()=>{
                 try {
@@ -215,7 +215,9 @@
         o.length > 0 && (a.images = [
             ...a.images,
             ...o
-        ], S(), e.previewInfo.textContent = `已載入 ${a.images.length} 張圖片。`, e.downloadSection.style.display = "none");
+        ], S(), e.previewInfo.textContent = `已載入 ${a.images.length} 張圖片。`, e.downloadSection.style.display = "none", setTimeout(()=>{
+            console.log("Auto-triggering preview..."), y();
+        }, 100));
     }
     function S() {
         e.fileCount.textContent = a.images.length, e.imageList.innerHTML = "", a.images.forEach((n, o)=>{
@@ -269,9 +271,9 @@
             }), e.sortList.appendChild(t);
         });
     }
-    let y = null;
+    let w = null;
     function W(n) {
-        y = parseInt(this.dataset.index), this.classList.add("dragging"), n.dataTransfer.effectAllowed = "move", n.dataTransfer.setData("text/plain", y);
+        w = parseInt(this.dataset.index), this.classList.add("dragging"), n.dataTransfer.effectAllowed = "move", n.dataTransfer.setData("text/plain", w);
     }
     function A(n) {
         return n.preventDefault && n.preventDefault(), n.dataTransfer.dropEffect = "move", !1;
@@ -285,9 +287,9 @@
     function H(n) {
         n.stopPropagation && n.stopPropagation();
         const o = parseInt(this.dataset.index);
-        if (y !== o) {
-            const t = a.images.splice(y, 1)[0];
-            a.images.splice(o, 0, t), S(), D(), e.downloadSection.style.display === "block" && w();
+        if (w !== o) {
+            const t = a.images.splice(w, 1)[0];
+            a.images.splice(o, 0, t), S(), D(), e.downloadSection.style.display === "block" && y();
         }
         return !1;
     }
@@ -298,31 +300,31 @@
     }
     let L = null;
     function N(n) {
-        n.touches.length === 1 && (y = parseInt(this.dataset.index), this.classList.add("dragging"));
+        n.touches.length === 1 && (w = parseInt(this.dataset.index), this.classList.add("dragging"));
     }
     function j(n) {
-        if (n.touches.length !== 1 || y === null) return;
+        if (n.touches.length !== 1 || w === null) return;
         n.preventDefault();
         const o = n.touches[0];
         this.style.pointerEvents = "none";
         const t = document.elementFromPoint(o.clientX, o.clientY);
         this.style.pointerEvents = "auto";
         const r = t?.closest(".image-item, .sort-item");
-        L && L !== r && L.classList.remove("drag-over"), r && r.dataset.index !== void 0 && parseInt(r.dataset.index) !== y ? (r.classList.add("drag-over"), L = r) : L = null;
+        L && L !== r && L.classList.remove("drag-over"), r && r.dataset.index !== void 0 && parseInt(r.dataset.index) !== w ? (r.classList.add("drag-over"), L = r) : L = null;
     }
     function F(n) {
         if (this.classList.remove("dragging"), this.style.pointerEvents = "auto", L) {
             const o = parseInt(L.dataset.index);
-            if (L.classList.remove("drag-over"), y !== null && !isNaN(o) && y !== o) {
-                const t = a.images.splice(y, 1)[0];
-                a.images.splice(o, 0, t), S(), D(), e.downloadSection.style.display === "block" && w();
+            if (L.classList.remove("drag-over"), w !== null && !isNaN(o) && w !== o) {
+                const t = a.images.splice(w, 1)[0];
+                a.images.splice(o, 0, t), S(), D(), e.downloadSection.style.display === "block" && y();
             }
         }
-        L = null, y = null, document.querySelectorAll(".image-item, .sort-item").forEach((o)=>{
+        L = null, w = null, document.querySelectorAll(".image-item, .sort-item").forEach((o)=>{
             o.classList.remove("dragging", "drag-over"), o.style.pointerEvents = "auto";
         });
     }
-    function w() {
+    function y() {
         if (a.images.length < 1) return;
         const n = a.images;
         let o = 0, t = 0;
@@ -368,7 +370,7 @@
                     g = B(o, t, i[a.direction], c[a.alignment], a.gridCols, l, s, f);
                 } catch (m) {
                     if (m.message === "WASM_MISSING" || m.toString().includes("WASM_MISSING")) {
-                        console.info("使用 JS Fallback 引擎渲染..."), w();
+                        console.info("使用 JS Fallback 引擎渲染..."), y();
                         const p = e.canvas.toDataURL("image/png"), E = await (await fetch(p)).blob(), I = URL.createObjectURL(E);
                         e.downloadSection.style.display = "block", e.btnShare && (e.btnShare.disabled = !a.canShare), e.previewInfo.textContent = `JS 引擎處理完成！解析度: ${e.canvas.width}x${e.canvas.height}`, e.btnMerge.disabled = !1, M();
                         return;
