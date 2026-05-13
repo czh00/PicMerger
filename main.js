@@ -61,8 +61,7 @@ function initElements() {
 
 async function init() {
     console.log("PicMerger v1.0.5 Initializing...");
-    // alert("JS 已啟動！若點擊依然無效，請告知。"); // 診斷用彈窗
-    await loadPlugins();
+    loadPlugins(); // 非同步載入，不阻塞主流程
     initElements();
     setupEventListeners();
     console.log("Event listeners attached.");
@@ -238,9 +237,16 @@ function setupEventListeners() {
 }
 
 async function handleFiles(files) {
+    console.log("Handling files:", files ? files.length : 0);
     if (!files || files.length === 0) return;
     
-    elements.previewInfo.textContent = "正在處理並修正圖片方向...";
+    // 確保元件已初始化 (懶加載)
+    if (!elements || !elements.imageList) {
+        console.log("Lazy-initializing elements...");
+        initElements();
+    }
+
+    if (elements.previewInfo) elements.previewInfo.textContent = "正在處理並修正圖片方向...";
     const newImages = [];
 
     for (const file of Array.from(files)) {
