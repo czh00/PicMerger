@@ -394,10 +394,10 @@ function updateGridColsLimit() {
         const count = state.images.length || 1;
         console.log("Updating Grid Max to:", count);
         elements.gridColsInput.max = count;
-        if (state.gridCols > count) {
-            state.gridCols = count;
-            elements.gridColsInput.value = count;
-        }
+        // 強制同步拉桿的視覺位置
+        if (state.gridCols > count) state.gridCols = count;
+        elements.gridColsInput.value = state.gridCols;
+        
         const valDisplay = document.getElementById('grid-cols-value');
         if (valDisplay) valDisplay.textContent = state.gridCols;
     } else {
