@@ -1,30 +1,30 @@
 (async ()=>{
     (function() {
-        const o = document.createElement("link").relList;
-        if (o && o.supports && o.supports("modulepreload")) return;
-        for (const s of document.querySelectorAll('link[rel="modulepreload"]'))r(s);
-        new MutationObserver((s)=>{
-            for (const c of s)if (c.type === "childList") for (const l of c.addedNodes)l.tagName === "LINK" && l.rel === "modulepreload" && r(l);
+        const a = document.createElement("link").relList;
+        if (a && a.supports && a.supports("modulepreload")) return;
+        for (const i of document.querySelectorAll('link[rel="modulepreload"]'))r(i);
+        new MutationObserver((i)=>{
+            for (const c of i)if (c.type === "childList") for (const l of c.addedNodes)l.tagName === "LINK" && l.rel === "modulepreload" && r(l);
         }).observe(document, {
             childList: !0,
             subtree: !0
         });
-        function a(s) {
+        function o(i) {
             const c = {};
-            return s.integrity && (c.integrity = s.integrity), s.referrerPolicy && (c.referrerPolicy = s.referrerPolicy), s.crossOrigin === "use-credentials" ? c.credentials = "include" : s.crossOrigin === "anonymous" ? c.credentials = "omit" : c.credentials = "same-origin", c;
+            return i.integrity && (c.integrity = i.integrity), i.referrerPolicy && (c.referrerPolicy = i.referrerPolicy), i.crossOrigin === "use-credentials" ? c.credentials = "include" : i.crossOrigin === "anonymous" ? c.credentials = "omit" : c.credentials = "same-origin", c;
         }
-        function r(s) {
-            if (s.ep) return;
-            s.ep = !0;
-            const c = a(s);
-            fetch(s.href, c);
+        function r(i) {
+            if (i.ep) return;
+            i.ep = !0;
+            const c = o(i);
+            fetch(i.href, c);
         }
     })();
-    const Z = "modulepreload", V = function(t, o) {
-        return new URL(t, o).href;
-    }, D = {}, z = function(o, a, r) {
-        let s = Promise.resolve();
-        if (a && a.length > 0) {
+    const Z = "modulepreload", V = function(t, a) {
+        return new URL(t, a).href;
+    }, P = {}, z = function(a, o, r) {
+        let i = Promise.resolve();
+        if (o && o.length > 0) {
             let l = function(u) {
                 return Promise.all(u.map((h)=>Promise.resolve(h).then((v)=>({
                             status: "fulfilled",
@@ -34,13 +34,13 @@
                             reason: v
                         }))));
             };
-            const i = document.getElementsByTagName("link"), f = document.querySelector("meta[property=csp-nonce]"), g = f?.nonce || f?.getAttribute("nonce");
-            s = l(a.map((u)=>{
-                if (u = V(u, r), u in D) return;
-                D[u] = !0;
+            const s = document.getElementsByTagName("link"), f = document.querySelector("meta[property=csp-nonce]"), g = f?.nonce || f?.getAttribute("nonce");
+            i = l(o.map((u)=>{
+                if (u = V(u, r), u in P) return;
+                P[u] = !0;
                 const h = u.endsWith(".css"), v = h ? '[rel="stylesheet"]' : "";
-                if (!!r) for(let m = i.length - 1; m >= 0; m--){
-                    const p = i[m];
+                if (!!r) for(let m = s.length - 1; m >= 0; m--){
+                    const p = s[m];
                     if (p.href === u && (!h || p.rel === "stylesheet")) return;
                 }
                 else if (document.querySelector(`link[href="${u}"]${v}`)) return;
@@ -51,18 +51,18 @@
             }));
         }
         function c(l) {
-            const i = new Event("vite:preloadError", {
+            const s = new Event("vite:preloadError", {
                 cancelable: !0
             });
-            if (i.payload = l, window.dispatchEvent(i), !i.defaultPrevented) throw l;
+            if (s.payload = l, window.dispatchEvent(s), !s.defaultPrevented) throw l;
         }
-        return s.then((l)=>{
-            for (const i of l || [])i.status === "rejected" && c(i.reason);
-            return o().catch(c);
+        return i.then((l)=>{
+            for (const s of l || [])s.status === "rejected" && c(s.reason);
+            return a().catch(c);
         });
     };
     console.log("DEBUG: main.js loading...");
-    window.handleFiles = P;
+    window.handleFiles = B;
     let k, U, q, G;
     async function J() {}
     let R = null;
@@ -111,14 +111,14 @@
     async function K() {
         console.log("PicMerger v1.0.5 Initializing..."), J(), T(), X(), console.log("Event listeners attached.");
         try {
-            const { default: t, merge_images: o } = await z(async ()=>{
-                const { default: a, merge_images: r } = await import("./pic_wasm-C60cSF7V.js");
+            const { default: t, merge_images: a } = await z(async ()=>{
+                const { default: o, merge_images: r } = await import("./pic_wasm-C60cSF7V.js");
                 return {
-                    default: a,
+                    default: o,
                     merge_images: r
                 };
             }, [], import.meta.url);
-            await t(), R = o, console.log("WASM engine loaded successfully.");
+            await t(), R = a, console.log("WASM engine loaded successfully.");
         } catch (t) {
             console.warn("WASM 載入跳過 (採用 JS 降級引擎):", t);
         }
@@ -133,20 +133,21 @@
         }), e.dropZone.addEventListener("dragleave", (t)=>{
             t.preventDefault(), t.stopPropagation(), e.dropZone.classList.remove("drag-over");
         }), e.dropZone.addEventListener("drop", (t)=>{
-            t.preventDefault(), t.stopPropagation(), e.dropZone.classList.remove("drag-over"), console.log("Drop event triggered"), t.dataTransfer && t.dataTransfer.files && P(t.dataTransfer.files);
+            t.preventDefault(), t.stopPropagation(), e.dropZone.classList.remove("drag-over"), console.log("Drop event triggered"), t.dataTransfer && t.dataTransfer.files && B(t.dataTransfer.files);
         }), e.fileInput.addEventListener("change", (t)=>{
-            P(t.target.files);
-        })) : console.error("Drop zone or file input not found!"), e.gridColsInput && e.gridColsInput.addEventListener("change", (t)=>{
-            const o = n.images.length || 1;
-            n.gridCols = Math.min(o, Math.max(1, parseInt(t.target.value) || 1)), t.target.value = n.gridCols, E();
+            B(t.target.files);
+        })) : console.error("Drop zone or file input not found!"), e.gridColsInput && e.gridColsInput.addEventListener("input", (t)=>{
+            n.gridCols = parseInt(t.target.value) || 1;
+            const a = document.getElementById("grid-cols-value");
+            a && (a.textContent = n.gridCols), E();
         }), e.outputModeSelect && e.outputModeSelect.addEventListener("change", (t)=>{
             n.outputMode = t.target.value, n.outputScale = 100, M(), E();
         }), e.outputValueInput && e.outputValueInput.addEventListener("input", (t)=>{
-            const o = parseFloat(t.target.value);
-            if (!o) return;
-            n.outputMode === "scale" ? n.outputScale = o : n.outputMode === "width" && n.baseWidth ? n.outputScale = o / n.baseWidth * 100 : n.outputMode === "height" && n.baseHeight && (n.outputScale = o / n.baseHeight * 100);
-            const a = document.getElementById("output-value-label");
-            a && (a.textContent = Math.round(o) + (n.outputMode === "scale" ? "%" : "px")), E();
+            const a = parseFloat(t.target.value);
+            if (!a) return;
+            n.outputMode === "scale" ? n.outputScale = a : n.outputMode === "width" && n.baseWidth ? n.outputScale = a / n.baseWidth * 100 : n.outputMode === "height" && n.baseHeight && (n.outputScale = a / n.baseHeight * 100);
+            const o = document.getElementById("output-value-label");
+            o && (o.textContent = Math.round(a) + (n.outputMode === "scale" ? "%" : "px")), E();
         }), e.alignmentSelect && e.alignmentSelect.addEventListener("change", (t)=>{
             n.alignment = t.target.value, E();
         }), e.scaleModeSelect && e.scaleModeSelect.addEventListener("change", (t)=>{
@@ -156,102 +157,110 @@
         }), e.btnMerge && e.btnMerge.addEventListener("click", async ()=>{
             n.images.length < 2 || (e.btnMerge.disabled = !0, e.btnMerge.textContent = "正在渲染畫布...", setTimeout(()=>{
                 try {
-                    Q();
+                    ee();
                 } catch (t) {
                     alert("渲染失敗: " + t.message);
                 } finally{
                     e.btnMerge.disabled = !1, e.btnMerge.textContent = "生成合併圖";
                 }
             }, 100));
-        }), e.btnReset && e.btnReset.addEventListener("click", ne), e.btnSave && e.btnSave.addEventListener("click", ee), e.btnShare && e.btnShare.addEventListener("click", te), e.canvasWrapper && e.canvasWrapper.addEventListener("click", ()=>{
-            n.images.length > 0 && Y();
-        }), e.btnCloseModal && e.btnCloseModal.addEventListener("click", C), e.sortModal && e.sortModal.addEventListener("click", (t)=>{
-            t.target === e.sortModal && C();
+        }), e.btnReset && e.btnReset.addEventListener("click", ae), e.btnSave && e.btnSave.addEventListener("click", te), e.btnShare && e.btnShare.addEventListener("click", ne), e.canvasWrapper && e.canvasWrapper.addEventListener("click", ()=>{
+            n.images.length > 0 && Q();
+        }), e.btnCloseModal && e.btnCloseModal.addEventListener("click", x), e.sortModal && e.sortModal.addEventListener("click", (t)=>{
+            t.target === e.sortModal && x();
         }), e.btnApplySort && e.btnApplySort.addEventListener("click", ()=>{
-            C(), e.btnMerge && e.btnMerge.click();
+            x(), e.btnMerge && e.btnMerge.click();
         });
     }
-    async function P(t) {
+    async function B(t) {
         if (console.log("Handling files:", t ? t.length : 0), !t || t.length === 0) return;
         (!e || !e.imageList) && (console.log("Lazy-initializing elements..."), T()), e.previewInfo && (e.previewInfo.textContent = "正在處理並修正圖片方向...");
-        const o = [];
-        for (const a of Array.from(t))if (a.type.startsWith("image/") || /\.(jpg|jpeg|png|webp|gif|bmp)$/i.test(a.name)) try {
-            const s = await new Promise((c, l)=>{
-                const i = new Image, f = URL.createObjectURL(a);
-                i.onload = ()=>{
+        const a = [];
+        for (const o of Array.from(t))if (o.type.startsWith("image/") || /\.(jpg|jpeg|png|webp|gif|bmp)$/i.test(o.name)) try {
+            const i = await new Promise((c, l)=>{
+                const s = new Image, f = URL.createObjectURL(o);
+                s.onload = ()=>{
                     const g = document.createElement("canvas");
-                    g.width = i.width, g.height = i.height, g.getContext("2d").drawImage(i, 0, 0, g.width, g.height), g.toBlob((h)=>{
+                    g.width = s.width, g.height = s.height, g.getContext("2d").drawImage(s, 0, 0, g.width, g.height), g.toBlob((h)=>{
                         const v = URL.createObjectURL(h), b = new Image;
                         b.onload = ()=>{
                             URL.revokeObjectURL(f), c({
                                 img: b,
-                                name: a.name,
+                                name: o.name,
                                 width: b.width,
                                 height: b.height,
                                 src: v
                             });
                         }, b.src = v;
                     }, "image/png");
-                }, i.onerror = ()=>{
-                    URL.revokeObjectURL(f), l(new Error(`圖片讀取失敗: ${a.name}`));
-                }, i.src = f;
+                }, s.onerror = ()=>{
+                    URL.revokeObjectURL(f), l(new Error(`圖片讀取失敗: ${o.name}`));
+                }, s.src = f;
             });
-            o.push(s);
-        } catch (s) {
-            console.error(s);
+            a.push(i);
+        } catch (i) {
+            console.error(i);
         }
-        o.length > 0 && (n.images = [
+        a.length > 0 && (n.images = [
             ...n.images,
-            ...o
+            ...a
         ], I(), e.previewInfo.textContent = `已載入 ${n.images.length} 張圖片。`, e.downloadSection.style.display = "none");
     }
     function I() {
-        e.fileCount.textContent = n.images.length, e.imageList.innerHTML = "", n.images.forEach((t, o)=>{
-            const a = document.createElement("div");
-            a.className = "image-item", a.draggable = !0, a.dataset.index = o, a.innerHTML = `
+        e.fileCount.textContent = n.images.length, e.imageList.innerHTML = "", n.images.forEach((t, a)=>{
+            const o = document.createElement("div");
+            o.className = "image-item", o.draggable = !0, o.dataset.index = a, o.innerHTML = `
             <img src="${t.src}" alt="Thumb" />
             <button class="btn-remove" title="移除圖片">✕</button>
-        `, a.querySelector(".btn-remove").addEventListener("click", (r)=>{
-                r.stopPropagation(), URL.revokeObjectURL(n.images[o].src), n.images.splice(o, 1), I(), e.downloadSection.style.display = "none";
-            }), a.addEventListener("dragstart", W), a.addEventListener("dragover", $), a.addEventListener("drop", H), a.addEventListener("dragend", _), a.addEventListener("dragenter", A), a.addEventListener("dragleave", O), a.addEventListener("touchstart", N, {
+        `, o.querySelector(".btn-remove").addEventListener("click", (r)=>{
+                r.stopPropagation(), URL.revokeObjectURL(n.images[a].src), n.images.splice(a, 1), I(), e.downloadSection.style.display = "none";
+            }), o.addEventListener("dragstart", W), o.addEventListener("dragover", $), o.addEventListener("drop", H), o.addEventListener("dragend", _), o.addEventListener("dragenter", A), o.addEventListener("dragleave", O), o.addEventListener("touchstart", N, {
                 passive: !1
-            }), a.addEventListener("touchmove", j, {
+            }), o.addEventListener("touchmove", j, {
                 passive: !1
-            }), a.addEventListener("touchend", F, {
+            }), o.addEventListener("touchend", F, {
                 passive: !1
-            }), e.imageList.appendChild(a);
-        }), e.btnMerge.disabled = n.images.length < 2;
+            }), e.imageList.appendChild(o);
+        }), e.btnMerge.disabled = n.images.length < 2, Y();
+    }
+    function Y() {
+        if (e.gridColsInput) {
+            const t = n.images.length || 1;
+            e.gridColsInput.max = t, n.gridCols > t && (n.gridCols = t, e.gridColsInput.value = t);
+            const a = document.getElementById("grid-cols-value");
+            a && (a.textContent = n.gridCols);
+        }
     }
     function M() {
         if (!n.baseWidth || !n.baseHeight) return;
         const t = document.getElementById("output-value-label");
-        let o = 100;
-        n.outputMode === "scale" ? (e.outputValueInput.max = 100, o = Math.round(n.outputScale)) : n.outputMode === "width" ? (e.outputValueInput.max = n.baseWidth, o = Math.round(n.baseWidth * (n.outputScale / 100))) : n.outputMode === "height" && (e.outputValueInput.max = n.baseHeight, o = Math.round(n.baseHeight * (n.outputScale / 100))), e.outputValueInput.value = o, t && (t.textContent = o + (n.outputMode === "scale" ? "%" : "px"));
+        let a = 100;
+        n.outputMode === "scale" ? (e.outputValueInput.max = 100, a = Math.round(n.outputScale)) : n.outputMode === "width" ? (e.outputValueInput.max = n.baseWidth, a = Math.round(n.baseWidth * (n.outputScale / 100))) : n.outputMode === "height" && (e.outputValueInput.max = n.baseHeight, a = Math.round(n.baseHeight * (n.outputScale / 100))), e.outputValueInput.value = a, t && (t.textContent = a + (n.outputMode === "scale" ? "%" : "px"));
     }
-    function Y() {
-        B(), e.sortModal.classList.add("show"), document.body.style.overflow = "hidden";
+    function Q() {
+        D(), e.sortModal.classList.add("show"), document.body.style.overflow = "hidden";
     }
-    function C() {
+    function x() {
         e.sortModal.classList.remove("show"), document.body.style.overflow = "";
     }
-    function B() {
-        e.sortList.innerHTML = "", n.images.forEach((t, o)=>{
-            const a = document.createElement("div");
-            a.className = "sort-item", a.draggable = !0, a.dataset.index = o, a.innerHTML = `
+    function D() {
+        e.sortList.innerHTML = "", n.images.forEach((t, a)=>{
+            const o = document.createElement("div");
+            o.className = "sort-item", o.draggable = !0, o.dataset.index = a, o.innerHTML = `
             <img src="${t.src}" alt="Thumb" />
             <div class="info">${t.name}</div>
-        `, a.addEventListener("dragstart", W), a.addEventListener("dragover", $), a.addEventListener("drop", H), a.addEventListener("dragend", _), a.addEventListener("dragenter", A), a.addEventListener("dragleave", O), a.addEventListener("touchstart", N, {
+        `, o.addEventListener("dragstart", W), o.addEventListener("dragover", $), o.addEventListener("drop", H), o.addEventListener("dragend", _), o.addEventListener("dragenter", A), o.addEventListener("dragleave", O), o.addEventListener("touchstart", N, {
                 passive: !1
-            }), a.addEventListener("touchmove", j, {
+            }), o.addEventListener("touchmove", j, {
                 passive: !1
-            }), a.addEventListener("touchend", F, {
+            }), o.addEventListener("touchend", F, {
                 passive: !1
-            }), e.sortList.appendChild(a);
+            }), e.sortList.appendChild(o);
         });
     }
-    let w = null;
+    let y = null;
     function W(t) {
-        w = parseInt(this.dataset.index), this.classList.add("dragging"), t.dataTransfer.effectAllowed = "move", t.dataTransfer.setData("text/plain", w);
+        y = parseInt(this.dataset.index), this.classList.add("dragging"), t.dataTransfer.effectAllowed = "move", t.dataTransfer.setData("text/plain", y);
     }
     function $(t) {
         return t.preventDefault && t.preventDefault(), t.dataTransfer.dropEffect = "move", !1;
@@ -264,76 +273,76 @@
     }
     function H(t) {
         t.stopPropagation && t.stopPropagation();
-        const o = parseInt(this.dataset.index);
-        if (w !== o) {
-            const a = n.images.splice(w, 1)[0];
-            n.images.splice(o, 0, a), I(), B(), e.downloadSection.style.display === "block" && E();
+        const a = parseInt(this.dataset.index);
+        if (y !== a) {
+            const o = n.images.splice(y, 1)[0];
+            n.images.splice(a, 0, o), I(), D(), e.downloadSection.style.display === "block" && E();
         }
         return !1;
     }
     function _(t) {
-        this.classList.remove("dragging"), document.querySelectorAll(".image-item, .sort-item").forEach((o)=>{
-            o.classList.remove("drag-over");
+        this.classList.remove("dragging"), document.querySelectorAll(".image-item, .sort-item").forEach((a)=>{
+            a.classList.remove("drag-over");
         });
     }
     let L = null;
     function N(t) {
-        t.touches.length === 1 && (w = parseInt(this.dataset.index), this.classList.add("dragging"));
+        t.touches.length === 1 && (y = parseInt(this.dataset.index), this.classList.add("dragging"));
     }
     function j(t) {
-        if (t.touches.length !== 1 || w === null) return;
+        if (t.touches.length !== 1 || y === null) return;
         t.preventDefault();
-        const o = t.touches[0];
+        const a = t.touches[0];
         this.style.pointerEvents = "none";
-        const a = document.elementFromPoint(o.clientX, o.clientY);
+        const o = document.elementFromPoint(a.clientX, a.clientY);
         this.style.pointerEvents = "auto";
-        const r = a?.closest(".image-item, .sort-item");
-        L && L !== r && L.classList.remove("drag-over"), r && r.dataset.index !== void 0 && parseInt(r.dataset.index) !== w ? (r.classList.add("drag-over"), L = r) : L = null;
+        const r = o?.closest(".image-item, .sort-item");
+        L && L !== r && L.classList.remove("drag-over"), r && r.dataset.index !== void 0 && parseInt(r.dataset.index) !== y ? (r.classList.add("drag-over"), L = r) : L = null;
     }
     function F(t) {
         if (this.classList.remove("dragging"), this.style.pointerEvents = "auto", L) {
-            const o = parseInt(L.dataset.index);
-            if (L.classList.remove("drag-over"), w !== null && !isNaN(o) && w !== o) {
-                const a = n.images.splice(w, 1)[0];
-                n.images.splice(o, 0, a), I(), B(), e.downloadSection.style.display === "block" && E();
+            const a = parseInt(L.dataset.index);
+            if (L.classList.remove("drag-over"), y !== null && !isNaN(a) && y !== a) {
+                const o = n.images.splice(y, 1)[0];
+                n.images.splice(a, 0, o), I(), D(), e.downloadSection.style.display === "block" && E();
             }
         }
-        L = null, w = null, document.querySelectorAll(".image-item, .sort-item").forEach((o)=>{
-            o.classList.remove("dragging", "drag-over"), o.style.pointerEvents = "auto";
+        L = null, y = null, document.querySelectorAll(".image-item, .sort-item").forEach((a)=>{
+            a.classList.remove("dragging", "drag-over"), a.style.pointerEvents = "auto";
         });
     }
     function E() {
         if (n.images.length < 1) return;
         const t = n.images;
-        let o = 0, a = 0;
+        let a = 0, o = 0;
         {
-            const l = n.gridCols, i = Math.ceil(t.length / l);
-            n.scaleMode === "fit-first" ? (o = t[0].width * l, a = t[0].height * i) : (o = Math.max(...t.map((f)=>f.width)) * l, a = Math.max(...t.map((f)=>f.height)) * i);
+            const l = n.gridCols, s = Math.ceil(t.length / l);
+            n.scaleMode === "fit-first" ? (a = t[0].width * l, o = t[0].height * s) : (a = Math.max(...t.map((f)=>f.width)) * l, o = Math.max(...t.map((f)=>f.height)) * s);
         }
-        n.baseWidth = o, n.baseHeight = a;
-        const r = n.outputScale / 100, s = o * r, c = a * r;
-        e.canvas.width = s, e.canvas.height = c, e.canvas.style.width = s + "px", e.ctx.fillStyle = n.bgColor, e.ctx.fillRect(0, 0, s, c), e.ctx.save(), e.ctx.scale(r, r);
+        n.baseWidth = a, n.baseHeight = o;
+        const r = n.outputScale / 100, i = a * r, c = o * r;
+        e.canvas.width = i, e.canvas.height = c, e.canvas.style.width = i + "px", e.ctx.fillStyle = n.bgColor, e.ctx.fillRect(0, 0, i, c), e.ctx.save(), e.ctx.scale(r, r);
         {
-            const l = n.gridCols, i = o / l, f = a / Math.ceil(t.length / l);
+            const l = n.gridCols, s = a / l, f = o / Math.ceil(t.length / l);
             t.forEach((g, u)=>{
-                const h = Math.floor(u / l), v = u % l, b = i / g.width, d = f / g.height, m = (n.scaleMode === "fit-first", Math.min(b, d)), p = g.width * m, y = g.height * m;
-                let S = v * i, x = h * f;
-                n.alignment === "center" ? (S += (i - p) / 2, x += (f - y) / 2) : n.alignment === "end" && (S += i - p, x += f - y), e.ctx.drawImage(g.img, S, x, p, y);
+                const h = Math.floor(u / l), v = u % l, b = s / g.width, d = f / g.height, m = (n.scaleMode === "fit-first", Math.min(b, d)), p = g.width * m, w = g.height * m;
+                let S = v * s, C = h * f;
+                n.alignment === "center" ? (S += (s - p) / 2, C += (f - w) / 2) : n.alignment === "end" && (S += s - p, C += f - w), e.ctx.drawImage(g.img, S, C, p, w);
             });
         }
-        e.ctx.restore(), e.downloadSection.style.display = "block", e.previewInfo.textContent = `即時預覽中... 解析度: ${Math.round(s)} x ${Math.round(c)} (${n.outputScale.toFixed(1)}%)`, M();
+        e.ctx.restore(), e.downloadSection.style.display = "block", e.previewInfo.textContent = `即時預覽中... 解析度: ${Math.round(i)} x ${Math.round(c)} (${n.outputScale.toFixed(1)}%)`, M();
     }
-    async function Q() {
+    async function ee() {
         if (!(n.images.length < 1)) {
             e.previewInfo.textContent = "Rust 引擎正在拼圖中...", e.btnMerge.disabled = !0;
             try {
-                const t = await Promise.all(n.images.map((m)=>fetch(m.src).then((p)=>p.arrayBuffer()))), o = new Uint8Array(t.reduce((m, p)=>m + p.byteLength, 0)), a = new Uint32Array(n.images.length * 2);
+                const t = await Promise.all(n.images.map((m)=>fetch(m.src).then((p)=>p.arrayBuffer()))), a = new Uint8Array(t.reduce((m, p)=>m + p.byteLength, 0)), o = new Uint32Array(n.images.length * 2);
                 let r = 0;
                 t.forEach((m, p)=>{
-                    const y = new Uint8Array(m);
-                    o.set(y, r), a[p * 2] = r, a[p * 2 + 1] = r + y.length, r += y.length;
+                    const w = new Uint8Array(m);
+                    a.set(w, r), o[p * 2] = r, o[p * 2 + 1] = r + w.length, r += w.length;
                 });
-                const s = {
+                const i = {
                     horizontal: 0,
                     vertical: 1,
                     grid: 2
@@ -341,15 +350,15 @@
                     start: 0,
                     center: 1,
                     end: 2
-                }, l = parseInt(n.bgColor.slice(1, 3), 16), i = parseInt(n.bgColor.slice(3, 5), 16), f = parseInt(n.bgColor.slice(5, 7), 16), g = performance.now();
+                }, l = parseInt(n.bgColor.slice(1, 3), 16), s = parseInt(n.bgColor.slice(3, 5), 16), f = parseInt(n.bgColor.slice(5, 7), 16), g = performance.now();
                 let u;
                 try {
                     if (!R) throw new Error("WASM_MISSING");
-                    u = R(o, a, s[n.direction], c[n.alignment], n.gridCols, l, i, f);
+                    u = R(a, o, i[n.direction], c[n.alignment], n.gridCols, l, s, f);
                 } catch (m) {
                     if (m.message === "WASM_MISSING" || m.toString().includes("WASM_MISSING")) {
                         console.info("使用 JS Fallback 引擎渲染..."), E();
-                        const p = e.canvas.toDataURL("image/png"), y = await (await fetch(p)).blob(), S = URL.createObjectURL(y);
+                        const p = e.canvas.toDataURL("image/png"), w = await (await fetch(p)).blob(), S = URL.createObjectURL(w);
                         e.downloadSection.style.display = "block", e.previewInfo.textContent = `JS 引擎處理完成！解析度: ${e.canvas.width}x${e.canvas.height}`, e.btnMerge.disabled = !1, M();
                         return;
                     }
@@ -370,26 +379,26 @@
             }
         }
     }
-    async function ee() {
+    async function te() {
         try {
             e.btnSave.disabled = !0, e.btnSave.textContent = "正在儲存至外部儲存...";
             const t = e.canvas.toDataURL("image/png", .9);
             if (window.Capacitor && window.Capacitor.isNativePlatform()) {
-                const o = t.split(",")[1], a = `PicMerger_${Date.now()}.png`;
+                const a = t.split(",")[1], o = `PicMerger_${Date.now()}.png`;
                 await k.writeFile({
-                    path: `PicMerger/${a}`,
-                    data: o,
+                    path: `PicMerger/${o}`,
+                    data: a,
                     directory: U.Documents,
                     recursive: !0
                 }), await G.show({
-                    text: `儲存成功！路徑：文件/PicMerger/${a}`,
+                    text: `儲存成功！路徑：文件/PicMerger/${o}`,
                     duration: "long"
                 }), e.btnSave.textContent = "✅ 已儲存至文件", alert(`儲存成功！
 圖片已存於「文件/PicMerger/」資料夾中。
 若相簿未立即出現，請手動前往查看或使用分享按鈕。`);
             } else {
-                const o = document.createElement("a");
-                o.href = t, o.download = `PicMerger_${Date.now()}.png`, o.click(), e.btnSave.textContent = "💾 儲存成功";
+                const a = document.createElement("a");
+                a.href = t, a.download = `PicMerger_${Date.now()}.png`, a.click(), e.btnSave.textContent = "💾 儲存成功";
             }
         } catch (t) {
             console.error("儲存失敗:", t), alert("儲存失敗: " + t.message), e.btnSave.textContent = "❌ 儲存失敗";
@@ -399,14 +408,14 @@
             }, 3e3);
         }
     }
-    async function te() {
+    async function ne() {
         try {
             e.btnShare.disabled = !0, e.btnShare.textContent = "正在準備分享...";
-            const t = e.canvas.toDataURL("image/png", .9), o = `PicMerger_Share_${Date.now()}.png`;
+            const t = e.canvas.toDataURL("image/png", .9), a = `PicMerger_Share_${Date.now()}.png`;
             if (window.Capacitor && window.Capacitor.isNativePlatform()) {
-                const a = t.split(",")[1], r = await k.writeFile({
-                    path: o,
-                    data: a,
+                const o = t.split(",")[1], r = await k.writeFile({
+                    path: a,
+                    data: o,
                     directory: U.Cache
                 });
                 await q.share({
@@ -423,7 +432,7 @@
             }, 3e3);
         }
     }
-    function ne() {
+    function ae() {
         n.images.forEach((t)=>URL.revokeObjectURL(t.src)), n.images = [], I(), e.ctx.clearRect(0, 0, e.canvas.width, e.canvas.height), e.previewInfo.textContent = "請上傳圖片以開始", e.downloadSection.style.display = "none", e.fileInput.value = "";
     }
     window.addEventListener("dragover", (t)=>t.preventDefault(), !1);
