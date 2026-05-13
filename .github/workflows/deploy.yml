@@ -4,6 +4,10 @@ on:
   push:
     branches: [main]
 
+# 明確宣告權限，確保 Action 有權寫入 gh-pages 分支
+permissions:
+  contents: write
+
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
@@ -17,14 +21,15 @@ jobs:
           node-version: 20
           cache: 'npm'
 
-      - name: Install and Build 🔧
-        run: |
-          npm install
-          # 這裡如果沒有 pkg-wasm 會失敗，但這是正確的 CI/CD 流程
-          npm run build
+      - name: Install Dependencies 🔧
+        run: npm install # 使用 install 以相容可能的鎖定檔變動
+
+      - name: Build 🏗️
+        run: npm run build
 
       - name: Deploy 🚀
         uses: JamesIves/github-pages-deploy-action@v4
         with:
-          folder: dist # Vite 預設輸出目錄
-          branch: gh-pages # 部署到 gh-pages 分支
+          folder: dist
+          branch: gh-pages
+          token: ${{ secrets.GITHUB_TOKEN }} # 顯式傳遞 Token
