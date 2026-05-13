@@ -239,7 +239,7 @@
     function Y() {
         if (e.gridColsInput) {
             const n = a.images.length || 1;
-            console.log("Updating Grid Max to:", n), e.gridColsInput.max = n, a.gridCols > n && (a.gridCols = n, e.gridColsInput.value = n);
+            console.log("Updating Grid Max to:", n), e.gridColsInput.max = n, a.gridCols > n && (a.gridCols = n), e.gridColsInput.value = a.gridCols;
             const o = document.getElementById("grid-cols-value");
             o && (o.textContent = a.gridCols);
         } else console.warn("Grid input not found during update");
