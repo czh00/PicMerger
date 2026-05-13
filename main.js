@@ -19,7 +19,7 @@ const state = {
     alignment: 'center', // 對齊方式: start, center, end
     scaleMode: 'original', // 縮放模式
     bgColor: '#000000', // 畫布背景顏色
-    gridCols: 2, // 網格列數
+    gridCols: 1, // 網格列數
     outputScale: 100, // 輸出縮放百分比
     outputMode: 'scale', // 輸出模式: scale (比例), width (定寬), height (定高)
     baseWidth: 0, // 原始總寬度
