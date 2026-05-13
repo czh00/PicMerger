@@ -77,7 +77,8 @@
         outputMode: "scale",
         baseWidth: 0,
         baseHeight: 0,
-        format: "image/png"
+        format: "image/png",
+        canShare: !!navigator.share
     };
     let e = {};
     function T() {
@@ -109,11 +110,7 @@
         }, console.log("Elements initialized:", Object.keys(e).filter((n)=>e[n]));
     }
     async function K() {
-        if (console.log("PicMerger v1.0.5 Initializing..."), J(), T(), e.btnShare) {
-            const n = !!navigator.share;
-            e.btnShare.disabled = !n, n || (e.btnShare.title = "當前瀏覽器不支援分享功能", e.btnShare.style.opacity = "0.4");
-        }
-        X(), console.log("Event listeners attached.");
+        console.log("PicMerger v1.0.5 Initializing..."), J(), T(), e.btnShare && (e.btnShare.disabled = !a.canShare, a.canShare || (e.btnShare.title = "當前瀏覽器不支援分享功能", e.btnShare.style.opacity = "0.4", e.btnShare.style.pointerEvents = "none")), X(), console.log("Event listeners attached.");
         try {
             const { default: n, merge_images: o } = await G(async ()=>{
                 const { default: t, merge_images: r } = await import("./pic_wasm-C60cSF7V.js");
@@ -218,16 +215,16 @@
         o.length > 0 && (a.images = [
             ...a.images,
             ...o
-        ], I(), e.previewInfo.textContent = `已載入 ${a.images.length} 張圖片。`, e.downloadSection.style.display = "none");
+        ], S(), e.previewInfo.textContent = `已載入 ${a.images.length} 張圖片。`, e.downloadSection.style.display = "none");
     }
-    function I() {
+    function S() {
         e.fileCount.textContent = a.images.length, e.imageList.innerHTML = "", a.images.forEach((n, o)=>{
             const t = document.createElement("div");
             t.className = "image-item", t.draggable = !0, t.dataset.index = o, t.innerHTML = `
             <img src="${n.src}" alt="Thumb" />
             <button class="btn-remove" title="移除圖片">✕</button>
         `, t.querySelector(".btn-remove").addEventListener("click", (r)=>{
-                r.stopPropagation(), URL.revokeObjectURL(a.images[o].src), a.images.splice(o, 1), I(), e.downloadSection.style.display = "none";
+                r.stopPropagation(), URL.revokeObjectURL(a.images[o].src), a.images.splice(o, 1), S(), e.downloadSection.style.display = "none";
             }), t.addEventListener("dragstart", W), t.addEventListener("dragover", A), t.addEventListener("drop", H), t.addEventListener("dragend", _), t.addEventListener("dragenter", $), t.addEventListener("dragleave", O), t.addEventListener("touchstart", N, {
                 passive: !1
             }), t.addEventListener("touchmove", j, {
@@ -290,7 +287,7 @@
         const o = parseInt(this.dataset.index);
         if (y !== o) {
             const t = a.images.splice(y, 1)[0];
-            a.images.splice(o, 0, t), I(), D(), e.downloadSection.style.display === "block" && w();
+            a.images.splice(o, 0, t), S(), D(), e.downloadSection.style.display === "block" && w();
         }
         return !1;
     }
@@ -318,7 +315,7 @@
             const o = parseInt(L.dataset.index);
             if (L.classList.remove("drag-over"), y !== null && !isNaN(o) && y !== o) {
                 const t = a.images.splice(y, 1)[0];
-                a.images.splice(o, 0, t), I(), D(), e.downloadSection.style.display === "block" && w();
+                a.images.splice(o, 0, t), S(), D(), e.downloadSection.style.display === "block" && w();
             }
         }
         L = null, y = null, document.querySelectorAll(".image-item, .sort-item").forEach((o)=>{
@@ -340,8 +337,8 @@
             const l = a.gridCols, s = o / l, f = t / Math.ceil(n.length / l);
             n.forEach((u, g)=>{
                 const h = Math.floor(g / l), v = g % l, b = s / u.width, d = f / u.height, m = (a.scaleMode === "fit-first", Math.min(b, d)), p = u.width * m, E = u.height * m;
-                let S = v * s, C = h * f;
-                a.alignment === "center" ? (S += (s - p) / 2, C += (f - E) / 2) : a.alignment === "end" && (S += s - p, C += f - E), e.ctx.drawImage(u.img, S, C, p, E);
+                let I = v * s, C = h * f;
+                a.alignment === "center" ? (I += (s - p) / 2, C += (f - E) / 2) : a.alignment === "end" && (I += s - p, C += f - E), e.ctx.drawImage(u.img, I, C, p, E);
             });
         }
         e.ctx.restore(), e.downloadSection.style.display = "block", e.previewInfo.textContent = `即時預覽中... 解析度: ${Math.round(i)} x ${Math.round(c)} (${a.outputScale.toFixed(1)}%)`, M();
@@ -372,8 +369,8 @@
                 } catch (m) {
                     if (m.message === "WASM_MISSING" || m.toString().includes("WASM_MISSING")) {
                         console.info("使用 JS Fallback 引擎渲染..."), w();
-                        const p = e.canvas.toDataURL("image/png"), E = await (await fetch(p)).blob(), S = URL.createObjectURL(E);
-                        e.downloadSection.style.display = "block", e.previewInfo.textContent = `JS 引擎處理完成！解析度: ${e.canvas.width}x${e.canvas.height}`, e.btnMerge.disabled = !1, M();
+                        const p = e.canvas.toDataURL("image/png"), E = await (await fetch(p)).blob(), I = URL.createObjectURL(E);
+                        e.downloadSection.style.display = "block", e.btnShare && (e.btnShare.disabled = !a.canShare), e.previewInfo.textContent = `JS 引擎處理完成！解析度: ${e.canvas.width}x${e.canvas.height}`, e.btnMerge.disabled = !1, M();
                         return;
                     }
                     throw m;
@@ -386,7 +383,7 @@
                     type: "image/png"
                 }), b = URL.createObjectURL(v), d = new Image;
                 d.onload = ()=>{
-                    a.baseWidth = d.width, a.baseHeight = d.height, e.canvas.width = d.width, e.canvas.height = d.height, e.ctx.drawImage(d, 0, 0), e.downloadSection.style.display = "block", e.previewInfo.textContent = `高品質 Rust 引擎處理完成！解析度: ${d.width}x${d.height} (耗時 ${(h - u).toFixed(0)}ms)`, e.btnMerge.disabled = !1, M();
+                    a.baseWidth = d.width, a.baseHeight = d.height, e.canvas.width = d.width, e.canvas.height = d.height, e.ctx.drawImage(d, 0, 0), e.downloadSection.style.display = "block", e.btnShare && (e.btnShare.disabled = !a.canShare), e.previewInfo.textContent = `高品質 Rust 引擎處理完成！解析度: ${d.width}x${d.height} (耗時 ${(h - u).toFixed(0)}ms)`, e.btnMerge.disabled = !1, M();
                 }, d.src = b;
             } catch (n) {
                 console.error("Rust 處理失敗:", n), e.previewInfo.textContent = "Rust 引擎發生錯誤: " + n, e.btnMerge.disabled = !1;
@@ -447,7 +444,7 @@
         }
     }
     function ae() {
-        a.images.forEach((n)=>URL.revokeObjectURL(n.src)), a.images = [], I(), e.ctx.clearRect(0, 0, e.canvas.width, e.canvas.height), e.previewInfo.textContent = "請上傳圖片以開始", e.downloadSection.style.display = "none", e.fileInput.value = "";
+        a.images.forEach((n)=>URL.revokeObjectURL(n.src)), a.images = [], S(), e.ctx.clearRect(0, 0, e.canvas.width, e.canvas.height), e.previewInfo.textContent = "請上傳圖片以開始", e.downloadSection.style.display = "none", e.fileInput.value = "";
     }
     window.addEventListener("dragover", (n)=>n.preventDefault(), !1);
     window.addEventListener("drop", (n)=>n.preventDefault(), !1);
