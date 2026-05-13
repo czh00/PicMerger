@@ -124,10 +124,10 @@ function setupEventListeners() {
     }
 
     if (elements.gridColsInput) {
-        elements.gridColsInput.addEventListener('change', (e) => {
-            const max = state.images.length || 1;
-            state.gridCols = Math.min(max, Math.max(1, parseInt(e.target.value) || 1));
-            e.target.value = state.gridCols;
+        elements.gridColsInput.addEventListener('input', (e) => {
+            state.gridCols = parseInt(e.target.value) || 1;
+            const valDisplay = document.getElementById('grid-cols-value');
+            if (valDisplay) valDisplay.textContent = state.gridCols;
             previewRender();
         });
     }
@@ -348,6 +348,20 @@ function updateUI() {
     });
 
     elements.btnMerge.disabled = state.images.length < 2;
+    updateGridColsLimit();
+}
+
+function updateGridColsLimit() {
+    if (elements.gridColsInput) {
+        const count = state.images.length || 1;
+        elements.gridColsInput.max = count;
+        if (state.gridCols > count) {
+            state.gridCols = count;
+            elements.gridColsInput.value = count;
+        }
+        const valDisplay = document.getElementById('grid-cols-value');
+        if (valDisplay) valDisplay.textContent = state.gridCols;
+    }
 }
 
 function syncOutputValue() {
