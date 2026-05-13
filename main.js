@@ -858,6 +858,9 @@ async function saveImageToStorage() {
         setTimeout(() => {
             elements.btnSave.disabled = false;
             elements.btnSave.textContent = '💾 直接儲存至文件資料夾';
+            if (elements.btnShare) {
+                elements.btnShare.disabled = !state.canShare;
+            }
         }, 3000);
     }
 }
@@ -900,8 +903,10 @@ async function shareImageToDevice() {
         }
     } finally {
         setTimeout(() => {
-            elements.btnShare.disabled = false;
-            elements.btnShare.textContent = '🔗 分享圖片至其他 App';
+            if (elements.btnShare) {
+                elements.btnShare.disabled = !state.canShare;
+                elements.btnShare.textContent = '🔗 分享圖片至其他 App';
+            }
         }, 3000);
     }
 }
