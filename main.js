@@ -6,18 +6,19 @@ import initWasm, { merge_images } from './pkg-wasm/pic_wasm.js';
 // Initialize Rust Wasm Engine
 await initWasm();
 
+// 全域狀態管理
 const state = {
-    images: [], // { img, name, width, height, src }
-    direction: 'grid', // Now exclusively using grid to handle all layouts
-    alignment: 'center',
-    scaleMode: 'original',
-    bgColor: '#000000',
-    gridCols: 2,
-    outputScale: 100,
-    outputMode: 'scale', // scale, width, height
-    baseWidth: 0,
-    baseHeight: 0,
-    format: 'image/png'
+    images: [], // 儲存已載入的圖片物件: { img, name, width, height, src }
+    direction: 'grid', // 目前預設採用網格佈局 (Grid)
+    alignment: 'center', // 對齊方式: start, center, end
+    scaleMode: 'original', // 縮放模式
+    bgColor: '#000000', // 畫布背景顏色
+    gridCols: 2, // 網格列數
+    outputScale: 100, // 輸出縮放百分比
+    outputMode: 'scale', // 輸出模式: scale (比例), width (定寬), height (定高)
+    baseWidth: 0, // 原始總寬度
+    baseHeight: 0, // 原始總高度
+    format: 'image/png' // 輸出格式
 };
 
 const elements = {
@@ -73,18 +74,7 @@ function setupEventListeners() {
         handleFiles(e.target.files);
     });
 
-    // Direction buttons removed from UI, exclusively using grid cols now
-    /*
-    elements.dirBtns.forEach(btn => {
-        btn.addEventListener('click', () => {
-            state.direction = btn.dataset.value;
-            elements.dirBtns.forEach(b => b.classList.toggle('active', b === btn));
-            elements.gridSettings.style.display = state.direction === 'grid' ? 'block' : 'none';
-            previewRender();
-        });
-    });
-    */
-
+    // 網格列數變更事件
     elements.gridColsInput.addEventListener('change', (e) => {
         const max = state.images.length || 1;
         state.gridCols = Math.min(max, Math.max(1, parseInt(e.target.value) || 1));
@@ -193,11 +183,10 @@ async function handleFiles(files) {
                 const url = URL.createObjectURL(file);
                 
                 img.onload = () => {
-                    // Use a canvas to "bake" the orientation. 
-                    // Modern browsers auto-orient the <img>, so drawing it to canvas 
-                    // results in a correctly oriented bitmap.
+                    // 使用 Canvas "烘焙" 圖片方向
+                    // 現代瀏覽器會自動依據 EXIF 旋轉 <img>，將其繪製到 Canvas 可取得修正後的點陣圖
                     const canvas = document.createElement('canvas');
-                    // Use naturalWidth/Height to get the visually correct dimensions
+                    // 使用 naturalWidth/Height 確保取得正確的視覺尺寸
                     canvas.width = img.width;
                     canvas.height = img.height;
                     const ctx = canvas.getContext('2d');
@@ -205,7 +194,7 @@ async function handleFiles(files) {
                     
                     canvas.toBlob((blob) => {
                         const orientedUrl = URL.createObjectURL(blob);
-                        // We also need a new Image object for this oriented URL to get correct dimensions
+                        // 建立新的 Image 物件以載入烘焙後的 URL，確保後續計算正確
                         const orientedImg = new Image();
                         orientedImg.onload = () => {
                             URL.revokeObjectURL(url); // Clean up original
@@ -473,7 +462,7 @@ function handleTouchEnd(e) {
     });
 }
 
-// JS Fast Preview Engine (GPU Accelerated)
+// JS 即時預覽引擎 (採用 CSS 視覺縮放以提升效能)
 function previewRender() {
     if (state.images.length < 1) return;
     
@@ -603,6 +592,7 @@ function previewRender() {
     syncOutputValue();
 }
 
+// 高品質 Rust WASM 拼接引擎
 async function render() {
     if (state.images.length < 1) return;
     

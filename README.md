@@ -1,34 +1,38 @@
-# PicMerger (圖片合併) v1.0.0
+# PicMerger (圖片合併) v1.0.4
 
 一個極簡、高品質的圖片與影片合併工具，支援 Android 與 Web 平台。
 
+## 🚀 1.0.4 更新
+- **修正影片合併**：之前影片合併會出現檢查影片格式現在已經修復可以正常合併。
 ## 主要功能
+- **Rust WASM 引擎加速**：採用 WebAssembly 核心進行高品質拼圖，效能大幅提升。
+- **智慧排序模式**：點擊預覽圖即可開啟排序對話框，支援拖拽調整合併順序。
+- **自動方向修正**：修正手機拍攝圖片（含 EXIF 資訊）在合併時的轉向錯誤。
+- **PWA 支援**：支援行動裝置安裝為應用程式，具備離線使用能力。
+- **對齊優化**：改進了網格佈局下的置中對齊演算法，確保多尺寸圖片併排美觀。
 - **網格合併**：支援自定義列數，自動計算佈局。
 - **無損畫質**：採用原始解析度進行合併，不縮放（除非手動調整）。
 - **影片處理**：支援合併多個影片，或從影片中自動提取畫面進行預覽。
 - **靈活對齊**：支援起點、置中、終點對齊模式。
 - **即時預覽**：所有參數調整（列數、尺寸、背景色）皆可即時看到預覽效果。
 - **自定義輸出**：支援按百分比、指定寬度或高度進行等比例輸出。
-- **智慧排序**：支援長按拖拽排序，直覺調整合併順序。
 
-## 檔案結構
+## 📂 檔案結構
 - `/android`: Android 原生專案 (Kotlin + Jetpack Compose)。
-  - `/app/src/main/java`: 核心邏輯與 UI 程式碼。
-- `/index.html`: Web 版介面。
-- `/main.js`: Web 版核心邏輯與圖片處理。
-- `/style.css`: Web 版樣式定義（現代化深色主題）。
-- `PicMerger_v1.0.0.apk`: 最新發佈的 Android 安裝包。
+- `/index.html`: Web 版入口介面。
+- `/main.js`: 核心商務邏輯與圖片預覽處理。
+- `/style.css`: 現代化深色主題樣式。
+- `/pkg-wasm`: Rust 編譯後的 WebAssembly 模組 (核心運算)。
+- `PicMerger_v1.0.4.apk`: 最新發佈的 Android 安裝包。
 
 ## 技術棧
-- **Android**: Kotlin, Jetpack Compose, Coil (圖片載入), RxFFmpeg (影片處理)。
-- **Web**: HTML5 Canvas, JavaScript (Vanilla), CSS3。
+- **Android**: Kotlin, Jetpack Compose, Coil, RxFFmpeg (影片處理)。
+- **Web**: HTML5 Canvas, Rust (WASM), JavaScript (Vanilla), Vite。
 
-## 如何使用 (Android)
-1. 下載並安裝 `PicMerger_v1.0.0.apk`。
-2. 點擊「增加」選取圖片或影片。
-3. 調整「列數」決定佈局。
-4. 使用「生成合併」按鈕完成渲染。
-5. 點擊「儲存」或「分享」匯出結果。
+## 如何使用
+1. **Web 版**：直接開啟 `index.html` 或部署至伺服器。
+2. **Android 版**：下載並安裝 `PicMerger_v1.0.4.apk`。
+3. 點擊「增加」選取圖片，調整「列數」與「對齊」，點擊「生成合併」即可。
 
 ---
-由 Antigravity 助開發。
+由 Antigravity 協助開發。

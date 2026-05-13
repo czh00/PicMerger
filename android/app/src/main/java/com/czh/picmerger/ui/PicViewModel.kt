@@ -231,17 +231,22 @@ class PicViewModel : ViewModel() {
      */
     private fun calculateBaseDimensions(context: Context): Pair<Int, Int> {
         if (images.isEmpty()) return 0 to 0
-        val bitmaps = images.mapNotNull { it.cachedBitmap ?: ImageProcessor.loadBitmap(context, it) }
-        if (bitmaps.isEmpty()) return 0 to 0
-
         val cols = maxOf(1, gridCols)
-        val rows = kotlin.math.ceil(bitmaps.size.toDouble() / cols).toInt()
+        val rows = kotlin.math.ceil(images.size.toDouble() / cols).toInt()
         
-        // Use standard GRID logic dimensions
-        val maxWidth = bitmaps.maxOf { it.width }
-        val maxHeight = bitmaps.maxOf { it.height }
-        
-        return (maxWidth * cols) to (maxHeight * rows)
+        if (isMediaTypeVideo) {
+            val minW = images.minOf { it.width }.takeIf { it > 0 } ?: 720
+            val minH = images.minOf { it.height }.takeIf { it > 0 } ?: 720
+            val finalW = if (minW % 2 != 0) minW - 1 else minW
+            val finalH = if (minH % 2 != 0) minH - 1 else minH
+            return (finalW * cols) to (finalH * rows)
+        } else {
+            val bitmaps = images.mapNotNull { it.cachedBitmap ?: ImageProcessor.loadBitmap(context, it) }
+            if (bitmaps.isEmpty()) return 0 to 0
+            val maxWidth = bitmaps.maxOf { it.width }
+            val maxHeight = bitmaps.maxOf { it.height }
+            return (maxWidth * cols) to (maxHeight * rows)
+        }
     }
 
     /**
@@ -254,11 +259,17 @@ class PicViewModel : ViewModel() {
         if (isMediaTypeVideo) {
             isProcessing = true
             statusMessage = "正在合併影片..."
+            val finalScale = when (outputMode) {
+                OutputMode.SCALE -> outputValue / 100f
+                OutputMode.WIDTH -> if (baseWidth > 0) outputValue / baseWidth else 1f
+                OutputMode.HEIGHT -> if (baseHeight > 0) outputValue / baseHeight else 1f
+            }
             VideoProcessor.mergeVideos(
                 context = context,
                 videos = images,
                 direction = direction,
                 gridCols = gridCols,
+                outputScale = finalScale,
                 onProgress = { },
                 onComplete = { file ->
                     viewModelScope.launch {

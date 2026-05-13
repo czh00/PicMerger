@@ -18,6 +18,7 @@ object VideoProcessor {
         videos: List<MediaItem>,
         direction: MergeDirection,
         gridCols: Int,
+        outputScale: Float = 1.0f,
         onProgress: (Int) -> Unit,
         onComplete: (File?) -> Unit
     ) {
@@ -26,7 +27,7 @@ object VideoProcessor {
             return
         }
 
-        executeMerge(context, videos, direction, gridCols, onComplete)
+        executeMerge(context, videos, direction, gridCols, outputScale, onComplete)
     }
 
     private fun executeMerge(
@@ -34,6 +35,7 @@ object VideoProcessor {
         videos: List<MediaItem>,
         direction: MergeDirection,
         gridCols: Int,
+        outputScale: Float,
         onComplete: (File?) -> Unit
     ) {
         val cacheDir = File(context.cacheDir, "video_cache")
@@ -81,62 +83,83 @@ object VideoProcessor {
         when (direction) {
             MergeDirection.HORIZONTAL -> {
                 val minHeight = videos.minOf { it.height }.takeIf { it > 0 } ?: 720
+                val finalH = if (minHeight % 2 != 0) minHeight - 1 else minHeight
                 videos.forEachIndexed { i, _ ->
-                    filterBuilder.append("[$i:v]scale=-2:$minHeight[v$i];")
+                    filterBuilder.append("[$i:v]scale=-2:$finalH[v$i];")
                 }
                 val vInputs = videos.indices.joinToString("") { "[v$it]" }
-                filterBuilder.append("${vInputs}hstack=inputs=${videos.size}[vout]")
+                filterBuilder.append("${vInputs}hstack=inputs=${videos.size}[merged];")
             }
             MergeDirection.VERTICAL -> {
                 val minWidth = videos.minOf { it.width }.takeIf { it > 0 } ?: 1280
+                val finalW = if (minWidth % 2 != 0) minWidth - 1 else minWidth
                 videos.forEachIndexed { i, _ ->
-                    filterBuilder.append("[$i:v]scale=$minWidth:-2[v$i];")
+                    filterBuilder.append("[$i:v]scale=$finalW:-2[v$i];")
                 }
                 val vInputs = videos.indices.joinToString("") { "[v$it]" }
-                filterBuilder.append("${vInputs}vstack=inputs=${videos.size}[vout]")
+                filterBuilder.append("${vInputs}vstack=inputs=${videos.size}[merged];")
             }
             MergeDirection.GRID -> {
                 val minW = videos.minOf { it.width }.takeIf { it > 0 } ?: 720
                 val minH = videos.minOf { it.height }.takeIf { it > 0 } ?: 720
                 
+                val finalW = if (minW % 2 != 0) minW - 1 else minW
+                val finalH = if (minH % 2 != 0) minH - 1 else minH
+                
                 videos.forEachIndexed { i, _ ->
-                    filterBuilder.append("[$i:v]scale=$minW:$minH:force_original_aspect_ratio=increase,crop=$minW:$minH[v$i];")
+                    filterBuilder.append("[$i:v]scale=$finalW:$finalH:force_original_aspect_ratio=increase,crop=$finalW:$finalH[v$i];")
                 }
                 
                 val cols = kotlin.math.max(1, gridCols)
-                val layoutBuilder = StringBuilder()
-                var r = 0
-                var c = 0
-                for (i in videos.indices) {
-                    if (i > 0) layoutBuilder.append("|")
-                    if (c == 0) {
-                        if (r == 0) layoutBuilder.append("0")
-                        else {
-                            val prevRowsH = (0 until r).joinToString("+") { "h$it" }
-                            layoutBuilder.append("0_$prevRowsH")
+                val rows = kotlin.math.ceil(videos.size.toDouble() / cols).toInt()
+                
+                val rowOuts = mutableListOf<String>()
+                var vIndex = 0
+                for (r in 0 until rows) {
+                    val elementsInRow = kotlin.math.min(cols, videos.size - r * cols)
+                    if (elementsInRow > 1) {
+                        val inputs = (0 until elementsInRow).joinToString("") { "[v${vIndex + it}]" }
+                        filterBuilder.append("${inputs}hstack=inputs=${elementsInRow}[row$r];")
+                        
+                        if (elementsInRow < cols) {
+                            val targetW = cols * finalW
+                            filterBuilder.append("[row$r]pad=$targetW:$finalH:0:0:black[row_padded$r];")
+                            rowOuts.add("[row_padded$r]")
+                        } else {
+                            rowOuts.add("[row$r]")
                         }
-                    } else {
-                        val prevColsW = (0 until c).joinToString("+") { "w$it" }
-                        if (r == 0) layoutBuilder.append("$prevColsW" + "_0")
-                        else {
-                            val prevRowsH = (0 until r).joinToString("+") { "h$it" }
-                            layoutBuilder.append("${prevColsW}_$prevRowsH")
+                    } else if (elementsInRow == 1) {
+                        if (cols > 1) {
+                            val targetW = cols * finalW
+                            filterBuilder.append("[v$vIndex]pad=$targetW:$finalH:0:0:black[row_padded$r];")
+                            rowOuts.add("[row_padded$r]")
+                        } else {
+                            rowOuts.add("[v$vIndex]")
                         }
                     }
-                    c++
-                    if (c >= cols) {
-                        c = 0
-                        r++
-                    }
+                    vIndex += elementsInRow
                 }
-                val vInputs = videos.indices.joinToString("") { "[v$it]" }
-                filterBuilder.append("${vInputs}xstack=inputs=${videos.size}:layout=${layoutBuilder}[vout]")
+                
+                if (rowOuts.size > 1) {
+                    val inputs = rowOuts.joinToString("")
+                    filterBuilder.append("${inputs}vstack=inputs=${rowOuts.size}[merged];")
+                } else if (rowOuts.size == 1) {
+                    val singleOut = rowOuts[0]
+                    filterBuilder.append("${singleOut}format=yuv420p[merged];")
+                }
             }
+        }
+        
+        if (outputScale != 1.0f && outputScale > 0f) {
+            val scaleStr = String.format(java.util.Locale.US, "%.4f", outputScale)
+            filterBuilder.append("[merged]scale=trunc(iw*${scaleStr}/2)*2:trunc(ih*${scaleStr}/2)*2[vout]")
+        } else {
+            filterBuilder.append("[merged]format=yuv420p[vout]")
         }
         
         // Audio Mixing Logic
         val audioIndices = hasAudioList.indices.filter { hasAudioList[it] }
-        if (audioIndices.isNotEmpty()) {
+        if (audioIndices.size > 1) {
             filterBuilder.append(";")
             val aInputs = audioIndices.joinToString("") { "[$it:a]" }
             filterBuilder.append("${aInputs}amix=inputs=${audioIndices.size}:duration=longest[aout]")
@@ -147,7 +170,10 @@ object VideoProcessor {
         cmdList.add("-map")
         cmdList.add("[vout]")
         
-        if (audioIndices.isNotEmpty()) {
+        if (audioIndices.size == 1) {
+            cmdList.add("-map")
+            cmdList.add("${audioIndices[0]}:a")
+        } else if (audioIndices.size > 1) {
             cmdList.add("-map")
             cmdList.add("[aout]")
         }

@@ -285,7 +285,7 @@ fun SettingsPanel(viewModel: PicViewModel) {
             // Disable advanced settings for videos since VideoProcessor auto scales to minimum size
             val enableAdvanced = !viewModel.isMediaTypeVideo
             if (viewModel.isMediaTypeVideo) {
-                Text("⚠️ 影片模式自動等比縮放", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
+                Text("⚠️ 影片模式對齊功能不支援 (使用自動填滿)", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
             }
 
             // Alignment
@@ -316,12 +316,12 @@ fun SettingsPanel(viewModel: PicViewModel) {
 
             // Output Mode
             Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 4.dp)) {
-                Text("輸出: ", style = MaterialTheme.typography.labelMedium, color = if(enableAdvanced) Color.Unspecified else Color.Gray)
+                Text("輸出: ", style = MaterialTheme.typography.labelMedium, color = Color.Unspecified)
                 SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
                     OutputMode.values().forEachIndexed { index, mode ->
                         SegmentedButton(
                             selected = viewModel.outputMode == mode,
-                            enabled = enableAdvanced,
+                            enabled = true,
                             onClick = { 
                                 viewModel.outputMode = mode
                                 viewModel.outputValue = when(mode) {
@@ -346,10 +346,10 @@ fun SettingsPanel(viewModel: PicViewModel) {
             // Output Value Input based on Mode
             if (viewModel.outputMode == OutputMode.SCALE) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text("比例: ${viewModel.outputValue.toInt()}%", style = MaterialTheme.typography.labelMedium, color = if(viewModel.outputValue > 100f && enableAdvanced) MaterialTheme.colorScheme.error else if (!enableAdvanced) Color.Gray else Color.Unspecified)
+                    Text("比例: ${viewModel.outputValue.toInt()}%", style = MaterialTheme.typography.labelMedium, color = if(viewModel.outputValue > 100f) MaterialTheme.colorScheme.error else Color.Unspecified)
                     Slider(
                         value = viewModel.outputValue,
-                        enabled = enableAdvanced,
+                        enabled = true,
                         onValueChange = { 
                             viewModel.outputValue = it
                             viewModel.autoPreview(context)
@@ -366,7 +366,7 @@ fun SettingsPanel(viewModel: PicViewModel) {
                         "${if (viewModel.outputMode == OutputMode.WIDTH) "寬度" else "高度"}: ${viewModel.outputValue.toInt()}px",
                         style = MaterialTheme.typography.labelMedium,
                         modifier = Modifier.width(100.dp),
-                        color = if(enableAdvanced) Color.Unspecified else Color.Gray
+                        color = Color.Unspecified
                     )
                     Slider(
                         value = viewModel.outputValue.coerceIn(1f, safeMaxDim),
@@ -375,7 +375,7 @@ fun SettingsPanel(viewModel: PicViewModel) {
                             viewModel.autoPreview(context)
                         },
                         valueRange = 1f..safeMaxDim,
-                        enabled = enableAdvanced,
+                        enabled = true,
                         modifier = Modifier.weight(1f).padding(horizontal = 8.dp)
                     )
                 }
