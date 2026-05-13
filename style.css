@@ -218,9 +218,15 @@ input[type="number"], input[type="range"] {
 }
 
 .button-group button.active {
-    background: var(--primary);
+    background: linear-gradient(135deg, #3b82f6, #2563eb);
     color: white;
-    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+    font-weight: bold;
+    box-shadow: 0 0 15px rgba(59, 130, 246, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.button-group button:not(.active) {
+    color: rgba(255, 255, 255, 0.5);
 }
 
 .segment-group {
