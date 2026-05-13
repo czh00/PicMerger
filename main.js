@@ -143,12 +143,31 @@ function setupEventListeners() {
         });
     }
 
-    if (elements.outputModeSelect) {
-        elements.outputModeSelect.addEventListener('change', (e) => {
-            state.outputMode = e.target.value;
-            state.outputScale = 100; // Reset to 100% when switching modes
-            syncOutputValue();
-            previewRender();
+    // 對齊方式按鈕組
+    const alignGroup = document.getElementById('alignment-group');
+    if (alignGroup) {
+        alignGroup.querySelectorAll('button').forEach(btn => {
+            btn.addEventListener('click', () => {
+                state.alignment = btn.dataset.value;
+                alignGroup.querySelectorAll('button').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                previewRender();
+            });
+        });
+    }
+
+    // 輸出模式按鈕組
+    const modeGroup = document.getElementById('output-mode-group');
+    if (modeGroup) {
+        modeGroup.querySelectorAll('button').forEach(btn => {
+            btn.addEventListener('click', () => {
+                state.outputMode = btn.dataset.value;
+                state.outputScale = 100;
+                modeGroup.querySelectorAll('button').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                syncOutputValue();
+                previewRender();
+            });
         });
     }
 

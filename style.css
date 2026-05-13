@@ -190,10 +190,41 @@ input[type="number"], input[type="range"] {
     outline: none;
 }
 
-button:disabled {
-    opacity: 0.4;
-    cursor: not-allowed;
-    filter: grayscale(0.5);
+.button-group {
+    display: flex;
+    background: var(--bg-dark);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 4px;
+    gap: 4px;
+}
+
+.button-group button {
+    flex: 1;
+    background: transparent;
+    border: none;
+    color: #888;
+    padding: 8px 4px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.2s;
+    white-space: nowrap;
+}
+
+.button-group button:hover {
+    color: white;
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.button-group button.active {
+    background: var(--primary);
+    color: white;
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.segment-group {
+    margin-bottom: 12px;
 }
 
 .actions {

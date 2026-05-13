@@ -46,22 +46,22 @@
                     </div>
                     <div class="setting-item">
                         <label>對齊方式</label>
-                        <select id="alignment">
-                            <option value="start">靠左 / 靠頂</option>
-                            <option value="center" selected>置中對齊</option>
-                            <option value="end">靠右 / 靠底</option>
-                        </select>
+                        <div class="button-group" id="alignment-group">
+                            <button data-value="start">靠左 / 靠頂</button>
+                            <button data-value="center" class="active">置中對齊</button>
+                            <button data-value="end">靠右 / 靠底</button>
+                        </div>
                     </div>
                     
                     <!-- 輸出尺寸設定 (簡化版) -->
                     <div class="setting-group output-settings">
                         <label class="group-label">輸出尺寸設定 (等比例鎖定)</label>
                         <div class="mode-value-group">
-                            <select id="output-mode" class="mode-select">
-                                <option value="scale">縮放百分比 (%)</option>
-                                <option value="width">指定寬度 (px)</option>
-                                <option value="height">指定高度 (px)</option>
-                            </select>
+                            <div class="button-group segment-group" id="output-mode-group">
+                                <button data-value="scale" class="active">百分比</button>
+                                <button data-value="width">指定寬</button>
+                                <button data-value="height">指定高</button>
+                            </div>
                             <span id="output-value-label">100</span>
                             <input type="range" id="output-value" value="100" min="1" max="100" />
                         </div>
