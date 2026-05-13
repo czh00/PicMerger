@@ -141,6 +141,8 @@ main {
     justify-content: center;
 }
 
+
+
 .settings {
     margin: 20px 0;
 }
@@ -156,7 +158,29 @@ main {
     margin-bottom: 6px;
 }
 
-select, input[type="number"], input[type="range"] {
+select {
+    width: 100%;
+    background: var(--bg-dark);
+    border: 1px solid var(--border);
+    color: white;
+    padding: 12px 16px;
+    border-radius: 12px;
+    outline: none;
+    appearance: none; /* 移除原生箭頭 */
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='white'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    background-size: 16px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+select:hover {
+    border-color: var(--primary);
+    background-color: rgba(59, 130, 246, 0.05);
+}
+
+input[type="number"], input[type="range"] {
     width: 100%;
     background: var(--bg-dark);
     border: 1px solid var(--border);
@@ -164,6 +188,12 @@ select, input[type="number"], input[type="range"] {
     padding: 10px;
     border-radius: 8px;
     outline: none;
+}
+
+button:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    filter: grayscale(0.5);
 }
 
 .actions {

@@ -61,8 +61,19 @@ function initElements() {
 
 async function init() {
     console.log("PicMerger v1.0.5 Initializing...");
-    loadPlugins(); // 非同步載入，不阻塞主流程
+    loadPlugins(); 
     initElements();
+    
+    // 偵測分享功能是否可用
+    if (elements.btnShare) {
+        const canShare = !!navigator.share;
+        elements.btnShare.disabled = !canShare;
+        if (!canShare) {
+            elements.btnShare.title = "當前瀏覽器不支援分享功能";
+            elements.btnShare.style.opacity = "0.4";
+        }
+    }
+
     setupEventListeners();
     console.log("Event listeners attached.");
     
@@ -354,6 +365,7 @@ function updateUI() {
 function updateGridColsLimit() {
     if (elements.gridColsInput) {
         const count = state.images.length || 1;
+        console.log("Updating Grid Max to:", count);
         elements.gridColsInput.max = count;
         if (state.gridCols > count) {
             state.gridCols = count;
@@ -361,6 +373,8 @@ function updateGridColsLimit() {
         }
         const valDisplay = document.getElementById('grid-cols-value');
         if (valDisplay) valDisplay.textContent = state.gridCols;
+    } else {
+        console.warn("Grid input not found during update");
     }
 }
 
