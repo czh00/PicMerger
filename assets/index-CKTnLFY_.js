@@ -215,18 +215,18 @@
         o.length > 0 && (a.images = [
             ...a.images,
             ...o
-        ], S(), e.previewInfo.textContent = `已載入 ${a.images.length} 張圖片。`, e.downloadSection.style.display = "none", setTimeout(()=>{
+        ], L(), e.previewInfo.textContent = `已載入 ${a.images.length} 張圖片。`, e.downloadSection.style.display = "none", setTimeout(()=>{
             console.log("Auto-triggering preview..."), y();
         }, 100));
     }
-    function S() {
+    function L() {
         e.fileCount.textContent = a.images.length, e.imageList.innerHTML = "", a.images.forEach((n, o)=>{
             const t = document.createElement("div");
             t.className = "image-item", t.draggable = !0, t.dataset.index = o, t.innerHTML = `
             <img src="${n.src}" alt="Thumb" />
             <button class="btn-remove" title="移除圖片">✕</button>
         `, t.querySelector(".btn-remove").addEventListener("click", (r)=>{
-                r.stopPropagation(), URL.revokeObjectURL(a.images[o].src), a.images.splice(o, 1), S(), e.downloadSection.style.display = "none";
+                r.stopPropagation(), URL.revokeObjectURL(a.images[o].src), a.images.splice(o, 1), L(), e.downloadSection.style.display = "none";
             }), t.addEventListener("dragstart", W), t.addEventListener("dragover", A), t.addEventListener("drop", H), t.addEventListener("dragend", _), t.addEventListener("dragenter", $), t.addEventListener("dragleave", O), t.addEventListener("touchstart", N, {
                 passive: !1
             }), t.addEventListener("touchmove", j, {
@@ -289,7 +289,7 @@
         const o = parseInt(this.dataset.index);
         if (w !== o) {
             const t = a.images.splice(w, 1)[0];
-            a.images.splice(o, 0, t), S(), D(), e.downloadSection.style.display === "block" && y();
+            a.images.splice(o, 0, t), L(), D(), e.downloadSection.style.display === "block" && y();
         }
         return !1;
     }
@@ -298,7 +298,7 @@
             o.classList.remove("drag-over");
         });
     }
-    let L = null;
+    let S = null;
     function N(n) {
         n.touches.length === 1 && (w = parseInt(this.dataset.index), this.classList.add("dragging"));
     }
@@ -310,17 +310,17 @@
         const t = document.elementFromPoint(o.clientX, o.clientY);
         this.style.pointerEvents = "auto";
         const r = t?.closest(".image-item, .sort-item");
-        L && L !== r && L.classList.remove("drag-over"), r && r.dataset.index !== void 0 && parseInt(r.dataset.index) !== w ? (r.classList.add("drag-over"), L = r) : L = null;
+        S && S !== r && S.classList.remove("drag-over"), r && r.dataset.index !== void 0 && parseInt(r.dataset.index) !== w ? (r.classList.add("drag-over"), S = r) : S = null;
     }
     function F(n) {
-        if (this.classList.remove("dragging"), this.style.pointerEvents = "auto", L) {
-            const o = parseInt(L.dataset.index);
-            if (L.classList.remove("drag-over"), w !== null && !isNaN(o) && w !== o) {
+        if (this.classList.remove("dragging"), this.style.pointerEvents = "auto", S) {
+            const o = parseInt(S.dataset.index);
+            if (S.classList.remove("drag-over"), w !== null && !isNaN(o) && w !== o) {
                 const t = a.images.splice(w, 1)[0];
-                a.images.splice(o, 0, t), S(), D(), e.downloadSection.style.display === "block" && y();
+                a.images.splice(o, 0, t), L(), D(), e.downloadSection.style.display === "block" && y();
             }
         }
-        L = null, w = null, document.querySelectorAll(".image-item, .sort-item").forEach((o)=>{
+        S = null, w = null, document.querySelectorAll(".image-item, .sort-item").forEach((o)=>{
             o.classList.remove("dragging", "drag-over"), o.style.pointerEvents = "auto";
         });
     }
@@ -417,7 +417,7 @@
             console.error("儲存失敗:", n), alert("儲存失敗: " + n.message), e.btnSave.textContent = "❌ 儲存失敗";
         } finally{
             setTimeout(()=>{
-                e.btnSave.disabled = !1, e.btnSave.textContent = "💾 直接儲存至文件資料夾";
+                e.btnSave.disabled = !1, e.btnSave.textContent = "💾 直接儲存至文件資料夾", e.btnShare && (e.btnShare.disabled = !a.canShare);
             }, 3e3);
         }
     }
@@ -441,12 +441,12 @@
             n.message && n.message.toLowerCase().includes("user cancelled") ? e.btnShare.textContent = "🔗 分享圖片至其他 App" : (console.error("分享失敗:", n), alert("分享失敗: " + n.message), e.btnShare.textContent = "❌ 分享失敗");
         } finally{
             setTimeout(()=>{
-                e.btnShare.disabled = !1, e.btnShare.textContent = "🔗 分享圖片至其他 App";
+                e.btnShare && (e.btnShare.disabled = !a.canShare, e.btnShare.textContent = "🔗 分享圖片至其他 App");
             }, 3e3);
         }
     }
     function ae() {
-        a.images.forEach((n)=>URL.revokeObjectURL(n.src)), a.images = [], S(), e.ctx.clearRect(0, 0, e.canvas.width, e.canvas.height), e.previewInfo.textContent = "請上傳圖片以開始", e.downloadSection.style.display = "none", e.fileInput.value = "";
+        a.images.forEach((n)=>URL.revokeObjectURL(n.src)), a.images = [], L(), e.ctx.clearRect(0, 0, e.canvas.width, e.canvas.height), e.previewInfo.textContent = "請上傳圖片以開始", e.downloadSection.style.display = "none", e.fileInput.value = "";
     }
     window.addEventListener("dragover", (n)=>n.preventDefault(), !1);
     window.addEventListener("drop", (n)=>n.preventDefault(), !1);
