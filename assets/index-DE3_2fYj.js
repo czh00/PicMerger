@@ -22,7 +22,7 @@
     })();
     const q = "modulepreload", Z = function(n, o) {
         return new URL(n, o).href;
-    }, P = {}, G = function(o, t, r) {
+    }, k = {}, G = function(o, t, r) {
         let i = Promise.resolve();
         if (t && t.length > 0) {
             let l = function(g) {
@@ -36,8 +36,8 @@
             };
             const s = document.getElementsByTagName("link"), f = document.querySelector("meta[property=csp-nonce]"), u = f?.nonce || f?.getAttribute("nonce");
             i = l(t.map((g)=>{
-                if (g = Z(g, r), g in P) return;
-                P[g] = !0;
+                if (g = Z(g, r), g in k) return;
+                k[g] = !0;
                 const h = g.endsWith(".css"), v = h ? '[rel="stylesheet"]' : "";
                 if (!!r) for(let m = s.length - 1; m >= 0; m--){
                     const p = s[m];
@@ -62,10 +62,10 @@
         });
     };
     console.log("DEBUG: main.js loading...");
-    window.handleFiles = R;
-    let k, U, V, z;
+    window.handleFiles = B;
+    let D, U, V, z;
     async function J() {}
-    let B = null;
+    let P = null;
     const a = {
         images: [],
         direction: "grid",
@@ -110,7 +110,7 @@
         }, console.log("Elements initialized:", Object.keys(e).filter((n)=>e[n]));
     }
     async function K() {
-        console.log("PicMerger v1.0.5 Initializing..."), J(), T(), e.btnShare && (e.btnShare.disabled = !a.canShare, a.canShare || (e.btnShare.title = "當前瀏覽器不支援分享功能", e.btnShare.style.opacity = "0.4", e.btnShare.style.pointerEvents = "none")), X(), console.log("Event listeners attached.");
+        console.log("PicMerger v1.0.5 Initializing..."), J(), T(), e.btnShare && (window.Capacitor && window.Capacitor.isNativePlatform() && a.canShare ? (e.btnShare.style.setProperty("display", "block", "important"), e.btnShare.disabled = !1) : e.btnShare.style.setProperty("display", "none", "important")), X(), console.log("Event listeners attached.");
         try {
             const { default: n, merge_images: o } = await G(async ()=>{
                 const { default: t, merge_images: r } = await import("./pic_wasm-C60cSF7V.js");
@@ -119,7 +119,7 @@
                     merge_images: r
                 };
             }, [], import.meta.url);
-            await n(), B = o, console.log("WASM engine loaded successfully.");
+            await n(), P = o, console.log("WASM engine loaded successfully.");
         } catch (n) {
             console.warn("WASM 載入跳過 (採用 JS 降級引擎):", n);
         }
@@ -134,9 +134,9 @@
         }), e.dropZone.addEventListener("dragleave", (t)=>{
             t.preventDefault(), t.stopPropagation(), e.dropZone.classList.remove("drag-over");
         }), e.dropZone.addEventListener("drop", (t)=>{
-            t.preventDefault(), t.stopPropagation(), e.dropZone.classList.remove("drag-over"), console.log("Drop event triggered"), t.dataTransfer && t.dataTransfer.files && R(t.dataTransfer.files);
+            t.preventDefault(), t.stopPropagation(), e.dropZone.classList.remove("drag-over"), console.log("Drop event triggered"), t.dataTransfer && t.dataTransfer.files && B(t.dataTransfer.files);
         }), e.fileInput.addEventListener("change", (t)=>{
-            R(t.target.files);
+            B(t.target.files);
         })) : console.error("Drop zone or file input not found!"), e.gridColsInput && e.gridColsInput.addEventListener("input", (t)=>{
             a.gridCols = parseInt(t.target.value) || 1;
             const r = document.getElementById("grid-cols-value");
@@ -183,7 +183,7 @@
             x(), e.btnMerge && e.btnMerge.click();
         });
     }
-    async function R(n) {
+    async function B(n) {
         if (console.log("Handling files:", n ? n.length : 0), !n || n.length === 0) return;
         (!e || !e.imageList) && (console.log("Lazy-initializing elements..."), T()), e.previewInfo && (e.previewInfo.textContent = "正在處理並修正圖片方向...");
         const o = [];
@@ -227,7 +227,7 @@
             <button class="btn-remove" title="移除圖片">✕</button>
         `, t.querySelector(".btn-remove").addEventListener("click", (r)=>{
                 r.stopPropagation(), URL.revokeObjectURL(a.images[o].src), a.images.splice(o, 1), L(), e.downloadSection.style.display = "none";
-            }), t.addEventListener("dragstart", W), t.addEventListener("dragover", A), t.addEventListener("drop", H), t.addEventListener("dragend", _), t.addEventListener("dragenter", $), t.addEventListener("dragleave", O), t.addEventListener("touchstart", N, {
+            }), t.addEventListener("dragstart", W), t.addEventListener("dragover", A), t.addEventListener("drop", O), t.addEventListener("dragend", H), t.addEventListener("dragenter", N), t.addEventListener("dragleave", $), t.addEventListener("touchstart", _, {
                 passive: !1
             }), t.addEventListener("touchmove", j, {
                 passive: !1
@@ -251,18 +251,18 @@
         a.outputMode === "scale" ? (e.outputValueInput.max = 100, o = Math.round(a.outputScale)) : a.outputMode === "width" ? (e.outputValueInput.max = a.baseWidth, o = Math.round(a.baseWidth * (a.outputScale / 100))) : a.outputMode === "height" && (e.outputValueInput.max = a.baseHeight, o = Math.round(a.baseHeight * (a.outputScale / 100))), e.outputValueInput.value = o, n && (n.textContent = o + (a.outputMode === "scale" ? "%" : "px"));
     }
     function Q() {
-        D(), e.sortModal.classList.add("show"), document.body.style.overflow = "hidden";
+        R(), e.sortModal.classList.add("show"), document.body.style.overflow = "hidden";
     }
     function x() {
         e.sortModal.classList.remove("show"), document.body.style.overflow = "";
     }
-    function D() {
+    function R() {
         e.sortList.innerHTML = "", a.images.forEach((n, o)=>{
             const t = document.createElement("div");
             t.className = "sort-item", t.draggable = !0, t.dataset.index = o, t.innerHTML = `
             <img src="${n.src}" alt="Thumb" />
             <div class="info">${n.name}</div>
-        `, t.addEventListener("dragstart", W), t.addEventListener("dragover", A), t.addEventListener("drop", H), t.addEventListener("dragend", _), t.addEventListener("dragenter", $), t.addEventListener("dragleave", O), t.addEventListener("touchstart", N, {
+        `, t.addEventListener("dragstart", W), t.addEventListener("dragover", A), t.addEventListener("drop", O), t.addEventListener("dragend", H), t.addEventListener("dragenter", N), t.addEventListener("dragleave", $), t.addEventListener("touchstart", _, {
                 passive: !1
             }), t.addEventListener("touchmove", j, {
                 passive: !1
@@ -278,28 +278,28 @@
     function A(n) {
         return n.preventDefault && n.preventDefault(), n.dataTransfer.dropEffect = "move", !1;
     }
-    function $(n) {
+    function N(n) {
         this.classList.add("drag-over");
     }
-    function O(n) {
+    function $(n) {
         this.classList.remove("drag-over");
     }
-    function H(n) {
+    function O(n) {
         n.stopPropagation && n.stopPropagation();
         const o = parseInt(this.dataset.index);
         if (w !== o) {
             const t = a.images.splice(w, 1)[0];
-            a.images.splice(o, 0, t), L(), D(), e.downloadSection.style.display === "block" && y();
+            a.images.splice(o, 0, t), L(), R(), e.downloadSection.style.display === "block" && y();
         }
         return !1;
     }
-    function _(n) {
+    function H(n) {
         this.classList.remove("dragging"), document.querySelectorAll(".image-item, .sort-item").forEach((o)=>{
             o.classList.remove("drag-over");
         });
     }
     let S = null;
-    function N(n) {
+    function _(n) {
         n.touches.length === 1 && (w = parseInt(this.dataset.index), this.classList.add("dragging"));
     }
     function j(n) {
@@ -317,7 +317,7 @@
             const o = parseInt(S.dataset.index);
             if (S.classList.remove("drag-over"), w !== null && !isNaN(o) && w !== o) {
                 const t = a.images.splice(w, 1)[0];
-                a.images.splice(o, 0, t), L(), D(), e.downloadSection.style.display === "block" && y();
+                a.images.splice(o, 0, t), L(), R(), e.downloadSection.style.display === "block" && y();
             }
         }
         S = null, w = null, document.querySelectorAll(".image-item, .sort-item").forEach((o)=>{
@@ -366,8 +366,8 @@
                 }, l = parseInt(a.bgColor.slice(1, 3), 16), s = parseInt(a.bgColor.slice(3, 5), 16), f = parseInt(a.bgColor.slice(5, 7), 16), u = performance.now();
                 let g;
                 try {
-                    if (!B) throw new Error("WASM_MISSING");
-                    g = B(o, t, i[a.direction], c[a.alignment], a.gridCols, l, s, f);
+                    if (!P) throw new Error("WASM_MISSING");
+                    g = P(o, t, i[a.direction], c[a.alignment], a.gridCols, l, s, f);
                 } catch (m) {
                     if (m.message === "WASM_MISSING" || m.toString().includes("WASM_MISSING")) {
                         console.info("使用 JS Fallback 引擎渲染..."), y();
@@ -398,7 +398,7 @@
             const n = e.canvas.toDataURL("image/png", .9);
             if (window.Capacitor && window.Capacitor.isNativePlatform()) {
                 const o = n.split(",")[1], t = `PicMerger_${Date.now()}.png`;
-                await k.writeFile({
+                await D.writeFile({
                     path: `PicMerger/${t}`,
                     data: o,
                     directory: U.Documents,
@@ -426,7 +426,7 @@
             e.btnShare.disabled = !0, e.btnShare.textContent = "正在準備分享...";
             const n = e.canvas.toDataURL("image/png", .9), o = `PicMerger_Share_${Date.now()}.png`;
             if (window.Capacitor && window.Capacitor.isNativePlatform()) {
-                const t = n.split(",")[1], r = await k.writeFile({
+                const t = n.split(",")[1], r = await D.writeFile({
                     path: o,
                     data: t,
                     directory: U.Cache
@@ -441,7 +441,7 @@
             n.message && n.message.toLowerCase().includes("user cancelled") ? e.btnShare.textContent = "🔗 分享圖片至其他 App" : (console.error("分享失敗:", n), alert("分享失敗: " + n.message), e.btnShare.textContent = "❌ 分享失敗");
         } finally{
             setTimeout(()=>{
-                e.btnShare && (e.btnShare.disabled = !a.canShare, e.btnShare.textContent = "🔗 分享圖片至其他 App");
+                e.btnShare && (!(window.Capacitor && window.Capacitor.isNativePlatform()) || !a.canShare ? e.btnShare.style.setProperty("display", "none", "important") : (e.btnShare.disabled = !1, e.btnShare.textContent = "🔗 分享圖片至其他 App"));
             }, 3e3);
         }
     }
