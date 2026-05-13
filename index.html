@@ -13,20 +13,20 @@
 <body>
     <div id="app">
         <header>
-            <h1>圖片合併 <span>v1.0.4</span></h1>
+            <h1>圖片合併 <span>v1.0.5</span></h1>
             <p>自由拼接，不失真，無上限</p>
         </header>
 
         <main>
             <div class="control-panel">
                 <section class="upload-section">
-                    <div id="main-drop-zone" class="drop-zone primary-drop">
+                    <div id="main-drop-zone" class="drop-zone primary-drop" onclick="console.log('Click detected'); document.getElementById('main-file-input').click()">
                         <div class="placeholder">
                             <span class="icon">➕</span>
                             <p>點擊或拖放圖片至此</p>
                             <small>支援多檔案選取</small>
                         </div>
-                        <input type="file" id="main-file-input" accept="image/*" multiple hidden />
+                        <input type="file" id="main-file-input" accept="image/*" multiple hidden onchange="if(window.handleFiles) window.handleFiles(this.files)" />
                     </div>
                 </section>
 
@@ -126,6 +126,11 @@
             <p>&copy; 2026 Antigravity Studio. Portable Pro Version.</p>
         </footer>
     </div>
+    <script>
+        // 緊急救援：確保全域拖放攔截
+        window.addEventListener('dragover', e => e.preventDefault());
+        window.addEventListener('drop', e => e.preventDefault());
+    </script>
     <script type="module" src="main.js"></script>
 </body>
 </html>

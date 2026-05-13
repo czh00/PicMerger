@@ -1,14 +1,16 @@
-import { Filesystem, Directory } from '@capacitor/filesystem';
-import { Share } from '@capacitor/share';
-import { Toast } from '@capacitor/toast';
-import initWasm, { merge_images } from './pkg-wasm/pic_wasm.js';
+// 診斷日誌：如果這行沒執行，代表 JS 載入失敗
+console.log("DEBUG: main.js loading...");
 
-// Initialize Rust Wasm Engine
-try {
-    await initWasm();
-} catch (e) {
-    console.warn("WASM 初始化跳過:", e);
+// 將核心函式暴露給全域，方便 HTML 直接呼叫
+window.handleFiles = handleFiles;
+
+// 動態載入套件（僅在支援環境下啟動）
+let Filesystem, Directory, Share, Toast;
+async function loadPlugins() {
+    // 這裡改為懶加載，避免阻塞
 }
+
+let merge_images_fn = null;
 
 // 全域狀態管理
 const state = {
@@ -25,126 +27,185 @@ const state = {
     format: 'image/png' // 輸出格式
 };
 
-const elements = {
-    dropZone: document.getElementById('main-drop-zone'),
-    fileInput: document.getElementById('main-file-input'),
-    imageList: document.getElementById('image-list'),
-    fileCount: document.getElementById('file-count'),
-    btnMerge: document.getElementById('btn-merge'),
-    btnReset: document.getElementById('btn-reset'),
-    dirBtns: [document.getElementById('dir-h'), document.getElementById('dir-v'), document.getElementById('dir-g')],
-    gridSettings: document.getElementById('grid-settings'),
-    gridColsInput: document.getElementById('grid-cols'),
-    outputModeSelect: document.getElementById('output-mode'),
-    outputValueInput: document.getElementById('output-value'),
-    alignmentSelect: document.getElementById('alignment'),
-    scaleModeSelect: document.getElementById('scale-mode'),
-    bgColorInput: document.getElementById('bg-color'),
-    canvas: document.getElementById('merge-canvas'),
-    canvasWrapper: document.getElementById('canvas-wrapper'),
-    ctx: document.getElementById('merge-canvas').getContext('2d'),
-    btnSave: document.getElementById('btn-save'),
-    btnShare: document.getElementById('btn-share'),
-    downloadSection: document.querySelector('.download-section'),
-    previewInfo: document.getElementById('preview-info'),
-    // Modal elements
-    sortModal: document.getElementById('sort-modal'),
-    sortList: document.getElementById('sort-list'),
-    btnCloseModal: document.getElementById('close-modal'),
-    btnApplySort: document.getElementById('btn-apply-sort')
-};
+let elements = {};
 
-function init() {
+function initElements() {
+    elements = {
+        dropZone: document.getElementById('main-drop-zone'),
+        fileInput: document.getElementById('main-file-input'),
+        imageList: document.getElementById('image-list'),
+        fileCount: document.getElementById('file-count'),
+        btnMerge: document.getElementById('btn-merge'),
+        btnReset: document.getElementById('btn-reset'),
+        gridSettings: document.getElementById('grid-settings'),
+        gridColsInput: document.getElementById('grid-cols'),
+        outputModeSelect: document.getElementById('output-mode'),
+        outputValueInput: document.getElementById('output-value'),
+        alignmentSelect: document.getElementById('alignment'),
+        scaleModeSelect: document.getElementById('scale-mode'),
+        bgColorInput: document.getElementById('bg-color'),
+        canvas: document.getElementById('merge-canvas'),
+        canvasWrapper: document.getElementById('canvas-wrapper'),
+        ctx: document.getElementById('merge-canvas')?.getContext('2d'),
+        btnSave: document.getElementById('btn-save'),
+        btnShare: document.getElementById('btn-share'),
+        downloadSection: document.querySelector('.download-section'),
+        previewInfo: document.getElementById('preview-info'),
+        sortModal: document.getElementById('sort-modal'),
+        sortList: document.getElementById('sort-list'),
+        btnCloseModal: document.getElementById('close-modal'),
+        btnApplySort: document.getElementById('btn-apply-sort')
+    };
+    console.log("Elements initialized:", Object.keys(elements).filter(k => elements[k]));
+}
+
+async function init() {
+    console.log("PicMerger v1.0.5 Initializing...");
+    // alert("JS 已啟動！若點擊依然無效，請告知。"); // 診斷用彈窗
+    await loadPlugins();
+    initElements();
     setupEventListeners();
+    console.log("Event listeners attached.");
+    
+    // 動態載入 WASM，不阻塞主流程
+    try {
+        const { default: initWasm, merge_images } = await import('./pkg-wasm/pic_wasm.js');
+        await initWasm();
+        merge_images_fn = merge_images;
+        console.log("WASM engine loaded successfully.");
+    } catch (e) {
+        console.warn("WASM 載入跳過 (採用 JS 降級引擎):", e);
+    }
 }
 
 function setupEventListeners() {
-    elements.dropZone.addEventListener('click', () => elements.fileInput.click());
-    
-    elements.dropZone.addEventListener('dragover', (e) => {
-        e.preventDefault();
-        elements.dropZone.classList.add('drag-over');
-    });
-
-    elements.dropZone.addEventListener('dragleave', () => elements.dropZone.classList.remove('drag-over'));
-
-    elements.dropZone.addEventListener('drop', (e) => {
-        e.preventDefault();
-        elements.dropZone.classList.remove('drag-over');
-        handleFiles(e.dataTransfer.files);
-    });
-
-    elements.fileInput.addEventListener('change', (e) => {
-        handleFiles(e.target.files);
-    });
-
-    // 網格列數變更事件
-    elements.gridColsInput.addEventListener('change', (e) => {
-        const max = state.images.length || 1;
-        state.gridCols = Math.min(max, Math.max(1, parseInt(e.target.value) || 1));
-        e.target.value = state.gridCols;
-        previewRender();
-    });
-
-    elements.outputModeSelect.addEventListener('change', (e) => {
-        state.outputMode = e.target.value;
-        state.outputScale = 100; // Reset to 100% when switching modes
-        syncOutputValue();
-        previewRender();
-    });
-
-    elements.outputValueInput.addEventListener('input', (e) => {
-        const val = parseFloat(e.target.value);
-        if (!val) return;
-
-        if (state.outputMode === 'scale') {
-            state.outputScale = val;
-        } else if (state.outputMode === 'width' && state.baseWidth) {
-            state.outputScale = (val / state.baseWidth) * 100;
-        } else if (state.outputMode === 'height' && state.baseHeight) {
-            state.outputScale = (val / state.baseHeight) * 100;
+    // 終極備援：如果一般綁定失效，使用全域點擊代理
+    document.addEventListener('click', (e) => {
+        const dropZone = e.target.closest('#main-drop-zone');
+        if (dropZone && elements.fileInput) {
+            console.log("Global Click Delegate Triggered");
+            elements.fileInput.click();
         }
-        
-        const label = document.getElementById('output-value-label');
-        if (label) label.textContent = Math.round(val) + (state.outputMode === 'scale' ? '%' : 'px');
-        
-        previewRender();
     });
 
-    elements.alignmentSelect.addEventListener('change', (e) => {
-        state.alignment = e.target.value;
-        previewRender();
-    });
-
-    elements.scaleModeSelect.addEventListener('change', (e) => {
-        state.scaleMode = e.target.value;
-        previewRender();
-    });
-
-    elements.bgColorInput.addEventListener('change', (e) => {
-        state.bgColor = e.target.value;
-        previewRender();
-    });
-
-    elements.btnMerge.addEventListener('click', async () => {
-        if (state.images.length < 2) return;
+    if (elements.dropZone && elements.fileInput) {
+        // 標準綁定
+        elements.dropZone.addEventListener('click', (e) => {
+            e.stopPropagation();
+            elements.fileInput.click();
+        });
         
-        elements.btnMerge.disabled = true;
-        elements.btnMerge.textContent = '正在渲染畫布...';
-        
-        setTimeout(() => {
-            try {
-                render();
-            } catch (err) {
-                alert('渲染失敗: ' + err.message);
-            } finally {
-                elements.btnMerge.disabled = false;
-                elements.btnMerge.textContent = '生成合併圖';
+        elements.dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            elements.dropZone.classList.add('drag-over');
+        });
+
+        elements.dropZone.addEventListener('dragleave', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            elements.dropZone.classList.remove('drag-over');
+        });
+
+        elements.dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            elements.dropZone.classList.remove('drag-over');
+            console.log("Drop event triggered");
+            if (e.dataTransfer && e.dataTransfer.files) {
+                handleFiles(e.dataTransfer.files);
             }
-        }, 100);
-    });
+        });
+
+        elements.fileInput.addEventListener('change', (e) => {
+            handleFiles(e.target.files);
+        });
+    } else {
+        console.error("Drop zone or file input not found!");
+    }
+
+    if (elements.gridColsInput) {
+        elements.gridColsInput.addEventListener('change', (e) => {
+            const max = state.images.length || 1;
+            state.gridCols = Math.min(max, Math.max(1, parseInt(e.target.value) || 1));
+            e.target.value = state.gridCols;
+            previewRender();
+        });
+    }
+
+    if (elements.outputModeSelect) {
+        elements.outputModeSelect.addEventListener('change', (e) => {
+            state.outputMode = e.target.value;
+            state.outputScale = 100; // Reset to 100% when switching modes
+            syncOutputValue();
+            previewRender();
+        });
+    }
+
+    if (elements.outputValueInput) {
+        elements.outputValueInput.addEventListener('input', (e) => {
+            const val = parseFloat(e.target.value);
+            if (!val) return;
+
+            if (state.outputMode === 'scale') {
+                state.outputScale = val;
+            } else if (state.outputMode === 'width' && state.baseWidth) {
+                state.outputScale = (val / state.baseWidth) * 100;
+            } else if (state.outputMode === 'height' && state.baseHeight) {
+                state.outputScale = (val / state.baseHeight) * 100;
+            }
+            
+            const label = document.getElementById('output-value-label');
+            if (label) label.textContent = Math.round(val) + (state.outputMode === 'scale' ? '%' : 'px');
+            
+            previewRender();
+        });
+    }
+
+    if (elements.alignmentSelect) {
+        elements.alignmentSelect.addEventListener('change', (e) => {
+            state.alignment = e.target.value;
+            previewRender();
+        });
+    }
+
+    if (elements.scaleModeSelect) {
+        elements.scaleModeSelect.addEventListener('change', (e) => {
+            state.scaleMode = e.target.value;
+            previewRender();
+        });
+    }
+
+    if (elements.bgColorInput) {
+        elements.bgColorInput.addEventListener('change', (e) => {
+            state.bgColor = e.target.value;
+            previewRender();
+        });
+    }
+
+    if (elements.btnMerge) {
+        elements.btnMerge.addEventListener('click', async () => {
+            if (state.images.length < 2) return;
+            
+            elements.btnMerge.disabled = true;
+            elements.btnMerge.textContent = '正在渲染畫布...';
+            
+            setTimeout(() => {
+                try {
+                    render();
+                } catch (err) {
+                    alert('渲染失敗: ' + err.message);
+                } finally {
+                    elements.btnMerge.disabled = false;
+                    elements.btnMerge.textContent = '生成合併圖';
+                }
+            }, 100);
+        });
+    }
     
-    elements.btnReset.addEventListener('click', reset);
+    if (elements.btnReset) {
+        elements.btnReset.addEventListener('click', reset);
+    }
     
     if (elements.btnSave) {
         elements.btnSave.addEventListener('click', saveImageToStorage);
@@ -153,22 +214,27 @@ function setupEventListeners() {
         elements.btnShare.addEventListener('click', shareImageToDevice);
     }
 
-    // Modal listeners
-    elements.canvasWrapper.addEventListener('click', () => {
-        if (state.images.length > 0) {
-            openSortModal();
-        }
-    });
+    if (elements.canvasWrapper) {
+        elements.canvasWrapper.addEventListener('click', () => {
+            if (state.images.length > 0) {
+                openSortModal();
+            }
+        });
+    }
 
-    elements.btnCloseModal.addEventListener('click', closeSortModal);
-    elements.sortModal.addEventListener('click', (e) => {
-        if (e.target === elements.sortModal) closeSortModal();
-    });
+    if (elements.btnCloseModal) elements.btnCloseModal.addEventListener('click', closeSortModal);
+    if (elements.sortModal) {
+        elements.sortModal.addEventListener('click', (e) => {
+            if (e.target === elements.sortModal) closeSortModal();
+        });
+    }
 
-    elements.btnApplySort.addEventListener('click', () => {
-        closeSortModal();
-        elements.btnMerge.click(); // Trigger re-render
-    });
+    if (elements.btnApplySort) {
+        elements.btnApplySort.addEventListener('click', () => {
+            closeSortModal();
+            if (elements.btnMerge) elements.btnMerge.click(); // Trigger re-render
+        });
+    }
 }
 
 async function handleFiles(files) {
@@ -632,7 +698,9 @@ async function render() {
         const startTime = performance.now();
         let mergedPng;
         try {
-            mergedPng = merge_images(
+            if (!merge_images_fn) throw new Error("WASM_MISSING");
+            
+            mergedPng = merge_images_fn(
                 combinedData,
                 offsets,
                 dirMap[state.direction],
@@ -786,9 +854,15 @@ function reset() {
     elements.fileInput.value = '';
 }
 
+// 全域攔截拖放預設行為，防止瀏覽器開圖
+window.addEventListener('dragover', (e) => e.preventDefault(), false);
+window.addEventListener('drop', (e) => e.preventDefault(), false);
+
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-        navigator.serviceWorker.register('sw.js');
+        try {
+            navigator.serviceWorker.register('sw.js').catch(e => console.warn("SW register failed (ignored)"));
+        } catch (e) {}
     });
 }
 

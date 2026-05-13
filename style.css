@@ -91,6 +91,10 @@ main {
     background: rgba(59, 130, 246, 0.1);
 }
 
+.drop-zone .placeholder {
+    pointer-events: none; /* 防止內層元素遮擋點擊與拖放 */
+}
+
 .drop-zone .icon {
     font-size: 3rem;
     display: block;
@@ -292,7 +296,10 @@ button.secondary {
     height: 60px;
     object-fit: cover;
     border-radius: 8px;
+    pointer-events: none;
 }
+
+
 
 footer {
     text-align: center;
