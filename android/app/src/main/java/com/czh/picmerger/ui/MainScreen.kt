@@ -83,7 +83,7 @@ fun MainScreen(viewModel: PicViewModel = viewModel()) {
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text("圖片合併", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
-                Text("v1.0.28", fontSize = 12.sp, color = MaterialTheme.colorScheme.outline)
+                Text("v1.0.29", fontSize = 12.sp, color = MaterialTheme.colorScheme.outline)
             }
 
             ImageSelectorArea(viewModel, onAddClick = {
@@ -445,8 +445,10 @@ fun PreviewArea(viewModel: PicViewModel) {
             var scale by remember { mutableStateOf(1f) }
             var offset by remember { mutableStateOf(Offset.Zero) }
             val state = rememberTransformableState { zoomChange, offsetChange, _ ->
-                scale = (scale * zoomChange).coerceIn(1f, 5f)
-                offset += offsetChange * scale
+                // 降低操控靈敏度，縮放變化量減為 40%，位移減半，提升精確度
+                val dampenedZoom = 1f + (zoomChange - 1f) * 0.4f
+                scale = (scale * dampenedZoom).coerceIn(1f, 5f)
+                offset += offsetChange * (scale * 0.5f)
             }
 
             Box(

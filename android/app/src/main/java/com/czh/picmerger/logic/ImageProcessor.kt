@@ -97,7 +97,7 @@ object ImageProcessor {
         val paint = Paint(Paint.FILTER_BITMAP_FLAG)
 
         if (direction == MergeDirection.GRID) {
-            val cellW = canvasWidth / cols
+            val cellWF = canvasWidth.toFloat() / cols
             var currentY = 0f
             
             for (r in 0 until rowHeights.size) {
@@ -106,11 +106,11 @@ object ImageProcessor {
                     val index = r * cols + c
                     if (index < bitmaps.size) {
                         val bitmap = bitmaps[index]
-                        val x = (c * cellW).toFloat()
+                        val x = c * cellWF
                         val y = currentY
                         
-                        // 執行 Contain 縮放繪製
-                        drawImageContain(canvas, bitmap, x, y, cellW.toFloat(), rowH, paint)
+                        // 執行 Contain 縮放繪製，使用浮點數寬度確保無縫填充
+                        drawImageContain(canvas, bitmap, x, y, cellWF, rowH, paint)
                     }
                 }
                 currentY += rowH
