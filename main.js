@@ -59,7 +59,7 @@ function initElements() {
 }
 
 async function init() {
-    console.log("PicMerger v1.0.8 Initializing...");
+    console.log("PicMerger v1.0.9 Initializing...");
     loadPlugins(); 
     initElements();
     
@@ -580,9 +580,18 @@ function previewRender() {
     const imgs = state.images;
     let canvasWidth = 0;
     let canvasHeight = 0;
+    const cols = state.gridCols;
+    const totalImgs = imgs.length;
 
-    // Calculate dimensions based on mode
-    if (state.direction === 'horizontal') {
+    // 動態偵測拼接模式：如果列數為 1 則為垂直；如果列數 = 圖片總數 則為水平
+    let effectiveDirection = state.direction;
+    if (state.direction === 'grid') {
+        if (cols === 1) effectiveDirection = 'vertical';
+        else if (cols === totalImgs) effectiveDirection = 'horizontal';
+    }
+
+    // Calculate dimensions based on effective mode
+    if (effectiveDirection === 'horizontal') {
         if (state.scaleMode === 'fit-first') {
             const baseH = imgs[0].height;
             canvasHeight = baseH;
@@ -591,7 +600,7 @@ function previewRender() {
             canvasHeight = Math.max(...imgs.map(i => i.height));
             canvasWidth = imgs.reduce((sum, item) => sum + item.width * (canvasHeight / item.height), 0);
         }
-    } else if (state.direction === 'vertical') {
+    } else if (effectiveDirection === 'vertical') {
         if (state.scaleMode === 'fit-first') {
             const baseW = imgs[0].width;
             canvasWidth = baseW;
@@ -600,9 +609,9 @@ function previewRender() {
             canvasWidth = Math.max(...imgs.map(i => i.width));
             canvasHeight = imgs.reduce((sum, item) => sum + item.height * (canvasWidth / item.width), 0);
         }
-    } else if (state.direction === 'grid') {
-        const cols = state.gridCols;
-        const rows = Math.ceil(imgs.length / cols);
+    } else {
+        // 標準網格模式
+        const rows = Math.ceil(totalImgs / cols);
         if (state.scaleMode === 'fit-first') {
             canvasWidth = imgs[0].width * cols;
             canvasHeight = imgs[0].height * rows;
@@ -632,10 +641,10 @@ function previewRender() {
     elements.ctx.save();
     elements.ctx.scale(finalScale, finalScale);
 
-    if (state.direction === 'grid') {
-        const cols = state.gridCols;
+    if (effectiveDirection === 'grid') {
+        const rows = Math.ceil(totalImgs / cols);
         const cellW = canvasWidth / cols;
-        const cellH = canvasHeight / Math.ceil(imgs.length / cols);
+        const cellH = canvasHeight / rows;
 
         imgs.forEach((item, index) => {
             const r = Math.floor(index / cols);
@@ -653,7 +662,7 @@ function previewRender() {
         imgs.forEach(item => {
             let drawW, drawH, x, y;
 
-            if (state.direction === 'horizontal') {
+            if (effectiveDirection === 'horizontal') {
                 drawH = canvasHeight;
                 drawW = item.width * (canvasHeight / item.height);
                 x = offset;
@@ -702,7 +711,13 @@ async function render() {
         });
 
         const dirMap = { 'horizontal': 0, 'vertical': 1, 'grid': 2 };
-        const alignMap = { 'start': 0, 'center': 1, 'end': 2 };
+        
+        // 動態偵測拼接模式：如果列數為 1 則為垂直；如果列數 = 圖片總數 則為水平
+        let effectiveDirValue = dirMap[state.direction];
+        if (state.direction === 'grid') {
+            if (state.gridCols === 1) effectiveDirValue = dirMap['vertical'];
+            else if (state.gridCols === state.images.length) effectiveDirValue = dirMap['horizontal'];
+        }
         
         const r = parseInt(state.bgColor.slice(1, 3), 16);
         const g = parseInt(state.bgColor.slice(3, 5), 16);
@@ -717,7 +732,7 @@ async function render() {
             mergedPng = merge_images_fn(
                 combinedData,
                 offsets,
-                dirMap[state.direction],
+                effectiveDirValue,
                 1, // Default to center since alignment is removed
                 state.gridCols,
                 r, g, b
