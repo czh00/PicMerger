@@ -4,20 +4,20 @@
         if (t && t.supports && t.supports("modulepreload")) return;
         for (const s of document.querySelectorAll('link[rel="modulepreload"]'))i(s);
         new MutationObserver((s)=>{
-            for (const d of s)if (d.type === "childList") for (const g of d.addedNodes)g.tagName === "LINK" && g.rel === "modulepreload" && i(g);
+            for (const l of s)if (l.type === "childList") for (const g of l.addedNodes)g.tagName === "LINK" && g.rel === "modulepreload" && i(g);
         }).observe(document, {
             childList: !0,
             subtree: !0
         });
         function a(s) {
-            const d = {};
-            return s.integrity && (d.integrity = s.integrity), s.referrerPolicy && (d.referrerPolicy = s.referrerPolicy), s.crossOrigin === "use-credentials" ? d.credentials = "include" : s.crossOrigin === "anonymous" ? d.credentials = "omit" : d.credentials = "same-origin", d;
+            const l = {};
+            return s.integrity && (l.integrity = s.integrity), s.referrerPolicy && (l.referrerPolicy = s.referrerPolicy), s.crossOrigin === "use-credentials" ? l.credentials = "include" : s.crossOrigin === "anonymous" ? l.credentials = "omit" : l.credentials = "same-origin", l;
         }
         function i(s) {
             if (s.ep) return;
             s.ep = !0;
-            const d = a(s);
-            fetch(s.href, d);
+            const l = a(s);
+            fetch(s.href, l);
         }
     })();
     const z = "modulepreload", V = function(n, t) {
@@ -26,39 +26,39 @@
         let s = Promise.resolve();
         if (a && a.length > 0) {
             let g = function(r) {
-                return Promise.all(r.map((c)=>Promise.resolve(c).then((f)=>({
+                return Promise.all(r.map((d)=>Promise.resolve(d).then((m)=>({
                             status: "fulfilled",
-                            value: f
-                        }), (f)=>({
+                            value: m
+                        }), (m)=>({
                             status: "rejected",
-                            reason: f
+                            reason: m
                         }))));
             };
-            const u = document.getElementsByTagName("link"), h = document.querySelector("meta[property=csp-nonce]"), l = h?.nonce || h?.getAttribute("nonce");
+            const u = document.getElementsByTagName("link"), f = document.querySelector("meta[property=csp-nonce]"), c = f?.nonce || f?.getAttribute("nonce");
             s = g(a.map((r)=>{
                 if (r = V(r, i), r in R) return;
                 R[r] = !0;
-                const c = r.endsWith(".css"), f = c ? '[rel="stylesheet"]' : "";
-                if (!!i) for(let m = u.length - 1; m >= 0; m--){
-                    const b = u[m];
-                    if (b.href === r && (!c || b.rel === "stylesheet")) return;
+                const d = r.endsWith(".css"), m = d ? '[rel="stylesheet"]' : "";
+                if (!!i) for(let h = u.length - 1; h >= 0; h--){
+                    const b = u[h];
+                    if (b.href === r && (!d || b.rel === "stylesheet")) return;
                 }
-                else if (document.querySelector(`link[href="${r}"]${f}`)) return;
+                else if (document.querySelector(`link[href="${r}"]${m}`)) return;
                 const p = document.createElement("link");
-                if (p.rel = c ? "stylesheet" : z, c || (p.as = "script"), p.crossOrigin = "", p.href = r, l && p.setAttribute("nonce", l), document.head.appendChild(p), c) return new Promise((m, b)=>{
-                    p.addEventListener("load", m), p.addEventListener("error", ()=>b(new Error(`Unable to preload CSS for ${r}`)));
+                if (p.rel = d ? "stylesheet" : z, d || (p.as = "script"), p.crossOrigin = "", p.href = r, c && p.setAttribute("nonce", c), document.head.appendChild(p), d) return new Promise((h, b)=>{
+                    p.addEventListener("load", h), p.addEventListener("error", ()=>b(new Error(`Unable to preload CSS for ${r}`)));
                 });
             }));
         }
-        function d(g) {
+        function l(g) {
             const u = new Event("vite:preloadError", {
                 cancelable: !0
             });
             if (u.payload = g, window.dispatchEvent(u), !u.defaultPrevented) throw g;
         }
         return s.then((g)=>{
-            for (const u of g || [])u.status === "rejected" && d(u.reason);
-            return t().catch(d);
+            for (const u of g || [])u.status === "rejected" && l(u.reason);
+            return t().catch(l);
         });
     };
     console.log("DEBUG: main.js loading...");
@@ -152,7 +152,7 @@
                 }
             }, 100));
         }), e.btnReset && e.btnReset.addEventListener("click", ae), e.btnSave && e.btnSave.addEventListener("click", te), e.btnShare && e.btnShare.addEventListener("click", ne), e.canvasWrapper && e.canvasWrapper.addEventListener("click", ()=>{
-            o.images.length > 0 && X();
+            o.images.length > 0 && Y();
         }), e.btnCloseModal && e.btnCloseModal.addEventListener("click", M), e.sortModal && e.sortModal.addEventListener("click", (t)=>{
             t.target === e.sortModal && M();
         }), e.btnApplySort && e.btnApplySort.addEventListener("click", ()=>{
@@ -164,25 +164,25 @@
         (!e || !e.imageList) && (console.log("Lazy-initializing elements..."), k()), e.previewInfo && (e.previewInfo.textContent = "正在處理並修正圖片方向...");
         const t = [];
         for (const a of Array.from(n))if (a.type.startsWith("image/") || /\.(jpg|jpeg|png|webp|gif|bmp)$/i.test(a.name)) try {
-            const s = await new Promise((d, g)=>{
-                const u = new Image, h = URL.createObjectURL(a);
+            const s = await new Promise((l, g)=>{
+                const u = new Image, f = URL.createObjectURL(a);
                 u.onload = ()=>{
-                    const l = document.createElement("canvas");
-                    l.width = u.width, l.height = u.height, l.getContext("2d").drawImage(u, 0, 0, l.width, l.height), l.toBlob((c)=>{
-                        const f = URL.createObjectURL(c), v = new Image;
+                    const c = document.createElement("canvas");
+                    c.width = u.width, c.height = u.height, c.getContext("2d").drawImage(u, 0, 0, c.width, c.height), c.toBlob((d)=>{
+                        const m = URL.createObjectURL(d), v = new Image;
                         v.onload = ()=>{
-                            URL.revokeObjectURL(h), d({
+                            URL.revokeObjectURL(f), l({
                                 img: v,
                                 name: a.name,
                                 width: v.width,
                                 height: v.height,
-                                src: f
+                                src: m
                             });
-                        }, v.src = f;
+                        }, v.src = m;
                     }, "image/png");
                 }, u.onerror = ()=>{
-                    URL.revokeObjectURL(h), g(new Error(`圖片讀取失敗: ${a.name}`));
-                }, u.src = h;
+                    URL.revokeObjectURL(f), g(new Error(`圖片讀取失敗: ${a.name}`));
+                }, u.src = f;
             });
             t.push(s);
         } catch (s) {
@@ -210,9 +210,9 @@
             }), a.addEventListener("touchend", _, {
                 passive: !1
             }), e.imageList.appendChild(a);
-        }), e.btnMerge.disabled = o.images.length < 2, K();
+        }), e.btnMerge.disabled = o.images.length < 2, X();
     }
-    function K() {
+    function X() {
         if (e.gridColsInput) {
             const n = o.images.length || 1;
             e.gridColsInput.max = n, o.gridCols > n && (o.gridCols = n), e.gridColsInput.value = o.gridCols;
@@ -227,7 +227,7 @@
         const a = o.outputScale / 100, i = Math.round(o.baseWidth * a), s = Math.round(o.baseHeight * a);
         o.outputMode === "scale" ? (e.outputValueInput.max = 100, t = Math.round(o.outputScale), n && (n.innerHTML = `${t}% <small>(${i} x ${s})</small>`)) : o.outputMode === "width" ? (e.outputValueInput.max = o.baseWidth * 2, t = i, n && (n.innerHTML = `${t}px <small>(高: ${s}px)</small>`)) : o.outputMode === "height" && (e.outputValueInput.max = o.baseHeight * 2, t = s, n && (n.innerHTML = `${t}px <small>(寬: ${i}px)</small>`)), e.outputValueInput.value = t;
     }
-    function X() {
+    function Y() {
         D(), e.sortModal.classList.add("show"), document.body.style.overflow = "hidden";
     }
     function M() {
@@ -301,46 +301,46 @@
             t.classList.remove("dragging", "drag-over"), t.style.pointerEvents = "auto";
         });
     }
-    function Y(n, t, a, i, s, d) {
-        const g = t.width / t.height, u = s / d;
-        let h, l, r, c;
-        g > u ? (c = t.height, r = c * u, h = (t.width - r) / 2, l = 0) : (r = t.width, c = r / u, h = 0, l = (t.height - c) / 2), n.drawImage(t, h, l, r, c, a, i, s, d);
+    function K(n, t, a, i, s, l) {
+        const g = t.width / t.height, u = s / l;
+        let f, c, r, d;
+        g > u ? (f = s, c = s / g, r = a, d = i + (l - c) / 2) : (c = l, f = l * g, r = a + (s - f) / 2, d = i), n.drawImage(t, 0, 0, t.width, t.height, r, d, f, c);
     }
     function L() {
         if (o.images.length < 1) return;
         const n = o.images;
         let t = 0, a = 0;
         const i = o.gridCols, s = n.length;
-        let d = o.direction;
-        if (i === 1 ? d = "vertical" : i === s && (d = "horizontal"), d === "horizontal") {
-            const l = o.scaleMode === "fit-first" ? n[0].height : Math.max(...n.map((r)=>r.height));
-            a = l, t = n.reduce((r, c)=>r + c.width * (l / c.height), 0);
-        } else if (d === "vertical") {
-            const l = o.scaleMode === "fit-first" ? n[0].width : Math.max(...n.map((r)=>r.width));
-            t = l, a = n.reduce((r, c)=>r + c.height * (l / c.width), 0);
+        let l = o.direction;
+        if (i === 1 ? l = "vertical" : i === s && (l = "horizontal"), l === "horizontal") {
+            const c = o.scaleMode === "fit-first" ? n[0].height : Math.max(...n.map((r)=>r.height));
+            a = c, t = n.reduce((r, d)=>r + d.width * (c / d.height), 0);
+        } else if (l === "vertical") {
+            const c = o.scaleMode === "fit-first" ? n[0].width : Math.max(...n.map((r)=>r.width));
+            t = c, a = n.reduce((r, d)=>r + d.height * (c / d.width), 0);
         } else {
-            const l = Math.ceil(s / i);
-            o.scaleMode === "fit-first" ? (t = n[0].width * i, a = n[0].height * l) : (t = Math.max(...n.map((r)=>r.width)) * i, a = Math.max(...n.map((r)=>r.height)) * l);
+            const c = Math.ceil(s / i);
+            o.scaleMode === "fit-first" ? (t = n[0].width * i, a = n[0].height * c) : (t = Math.max(...n.map((r)=>r.width)) * i, a = Math.max(...n.map((r)=>r.height)) * c);
         }
         o.baseWidth = t, o.baseHeight = a;
-        const g = o.outputScale / 100, u = t * g, h = a * g;
-        if (e.canvas.width = u, e.canvas.height = h, e.canvas.style.width = u + "px", e.ctx.fillStyle = o.bgColor, e.ctx.fillRect(0, 0, u, h), e.ctx.save(), e.ctx.scale(g, g), d === "grid") {
-            const l = Math.ceil(s / i), r = t / i, c = a / l;
-            n.forEach((f, v)=>{
-                const p = Math.floor(v / i), m = v % i;
-                Y(e.ctx, f.img, m * r, p * c, r, c);
+        const g = o.outputScale / 100, u = t * g, f = a * g;
+        if (e.canvas.width = u, e.canvas.height = f, e.canvas.style.width = u + "px", e.ctx.fillStyle = o.bgColor, e.ctx.fillRect(0, 0, u, f), e.ctx.save(), e.ctx.scale(g, g), l === "grid") {
+            const c = Math.ceil(s / i), r = t / i, d = a / c;
+            n.forEach((m, v)=>{
+                const p = Math.floor(v / i), h = v % i;
+                K(e.ctx, m.img, h * r, p * d, r, d);
             });
         } else {
-            let l = 0;
+            let c = 0;
             n.forEach((r)=>{
-                let c, f, v, p;
-                d === "horizontal" ? (f = a, c = r.width * (a / r.height), v = l, p = 0, l += c) : (c = t, f = r.height * (t / r.width), v = 0, p = l, l += f), e.ctx.drawImage(r.img, v, p, c, f);
+                let d, m, v, p;
+                l === "horizontal" ? (m = a, d = r.width * (a / r.height), v = c, p = 0, c += d) : (d = t, m = r.height * (t / r.width), v = 0, p = c, c += m), e.ctx.drawImage(r.img, v, p, d, m);
             });
         }
-        e.ctx.restore(), e.downloadSection.style.display = "block", e.previewInfo.textContent = `即時預覽中... 解析度: ${Math.round(u)} x ${Math.round(h)}`, C();
+        e.ctx.restore(), e.downloadSection.style.display = "block", e.previewInfo.textContent = `即時預覽中... 解析度: ${Math.round(u)} x ${Math.round(f)}`, C();
     }
     async function Q() {
-        console.log("PicMerger v1.0.12 Initializing..."), G(), k(), e.btnShare && (window.Capacitor && window.Capacitor.isNativePlatform() && o.canShare ? (e.btnShare.style.setProperty("display", "block", "important"), e.btnShare.disabled = !1) : e.btnShare.style.setProperty("display", "none", "important")), J(), console.log("Event listeners attached.");
+        console.log("PicMerger v1.0.13 Initializing..."), G(), k(), e.btnShare && (window.Capacitor && window.Capacitor.isNativePlatform() && o.canShare ? (e.btnShare.style.setProperty("display", "block", "important"), e.btnShare.disabled = !1) : e.btnShare.style.setProperty("display", "none", "important")), J(), console.log("Event listeners attached.");
         try {
             const { default: n, merge_images: t } = await Z(async ()=>{
                 const { default: a, merge_images: i } = await import("./pic_wasm-C60cSF7V.js");
@@ -370,20 +370,20 @@
                     e.downloadSection.style.display = "block", e.btnShare && (e.btnShare.disabled = !o.canShare), e.previewInfo.textContent = `處理完成！解析度: ${e.canvas.width}x${e.canvas.height} (比例鎖定)`, e.btnMerge.disabled = !1, C();
                     return;
                 }
-                const i = await Promise.all(o.images.map((b)=>fetch(b.src).then((E)=>E.arrayBuffer()))), s = new Uint8Array(i.reduce((b, E)=>b + E.byteLength, 0)), d = new Uint32Array(o.images.length * 2);
+                const i = await Promise.all(o.images.map((b)=>fetch(b.src).then((E)=>E.arrayBuffer()))), s = new Uint8Array(i.reduce((b, E)=>b + E.byteLength, 0)), l = new Uint32Array(o.images.length * 2);
                 let g = 0;
                 i.forEach((b, E)=>{
                     const S = new Uint8Array(b);
-                    s.set(S, g), d[E * 2] = g, d[E * 2 + 1] = g + S.length, g += S.length;
+                    s.set(S, g), l[E * 2] = g, l[E * 2 + 1] = g + S.length, g += S.length;
                 });
-                const u = parseInt(o.bgColor.slice(1, 3), 16), h = parseInt(o.bgColor.slice(3, 5), 16), l = parseInt(o.bgColor.slice(5, 7), 16), r = performance.now(), c = x(s, d, t, 1, o.gridCols, u, h, l), f = performance.now(), v = new Blob([
-                    c
+                const u = parseInt(o.bgColor.slice(1, 3), 16), f = parseInt(o.bgColor.slice(3, 5), 16), c = parseInt(o.bgColor.slice(5, 7), 16), r = performance.now(), d = x(s, l, t, 1, o.gridCols, u, f, c), m = performance.now(), v = new Blob([
+                    d
                 ], {
                     type: "image/png"
-                }), p = URL.createObjectURL(v), m = new Image;
-                m.onload = ()=>{
-                    o.baseWidth = m.width, o.baseHeight = m.height, e.canvas.width = m.width, e.canvas.height = m.height, e.ctx.drawImage(m, 0, 0), e.downloadSection.style.display = "block", e.btnShare && (e.btnShare.disabled = !o.canShare), e.previewInfo.textContent = `高品質 Rust 引擎處理完成！解析度: ${m.width}x${m.height} (耗時 ${(f - r).toFixed(0)}ms)`, e.btnMerge.disabled = !1, C();
-                }, m.src = p;
+                }), p = URL.createObjectURL(v), h = new Image;
+                h.onload = ()=>{
+                    o.baseWidth = h.width, o.baseHeight = h.height, e.canvas.width = h.width, e.canvas.height = h.height, e.ctx.drawImage(h, 0, 0), e.downloadSection.style.display = "block", e.btnShare && (e.btnShare.disabled = !o.canShare), e.previewInfo.textContent = `高品質 Rust 引擎處理完成！解析度: ${h.width}x${h.height} (耗時 ${(m - r).toFixed(0)}ms)`, e.btnMerge.disabled = !1, C();
+                }, h.src = p;
             } catch (n) {
                 console.error("Rust 處理失敗:", n), e.previewInfo.textContent = "Rust 引擎發生錯誤: " + n, e.btnMerge.disabled = !1;
             }
