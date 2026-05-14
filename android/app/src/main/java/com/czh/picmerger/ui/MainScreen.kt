@@ -83,7 +83,7 @@ fun MainScreen(viewModel: PicViewModel = viewModel()) {
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text("圖片合併", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
-                Text("v1.0.26", fontSize = 12.sp, color = MaterialTheme.colorScheme.outline)
+                Text("v1.0.27", fontSize = 12.sp, color = MaterialTheme.colorScheme.outline)
             }
 
             ImageSelectorArea(viewModel, onAddClick = {
@@ -205,34 +205,34 @@ fun ImageSelectorArea(viewModel: PicViewModel, onAddClick: () -> Unit) {
                                             change.consume()
                                             dragOffset += dragAmount
                                             
-                                            // 穩定排序邏輯：
-                                            // 1. 找到被拖移項目的「當前」真實索引
                                             val currentIdx = viewModel.images.indexOfFirst { it.uri == draggedUri }
                                             if (currentIdx != -1) {
-                                                val itemSizeWithSpacing = with(density) { 80.dp.toPx() } // 72dp + 8dp spacing
+                                                // 精確計算：使用實際容器寬度與自適應列數
+                                                val minItemWidthPx = with(density) { 72.dp.toPx() }
+                                                val spacingPx = with(density) { 8.dp.toPx() }
                                                 
-                                                // 2. 計算目前的網格列數
-                                                val columns = (size.width / itemSizeWithSpacing).toInt().coerceAtLeast(1)
+                                                // 計算網格實際上分成了幾列 (Adaptive 邏輯)
+                                                val columns = (size.width / (minItemWidthPx + spacingPx)).toInt().coerceAtLeast(1)
+                                                // 計算每一格的精確寬度與高度（含間距）
+                                                val preciseCellWidth = size.width / columns
+                                                val preciseCellHeight = preciseCellWidth // 網格通常寬高比一致
                                                 
-                                                // 3. 根據累計位移計算目標索引偏移量
-                                                val offsetX = (dragOffset.x / itemSizeWithSpacing).toInt()
-                                                val offsetY = (dragOffset.y / itemSizeWithSpacing).toInt()
+                                                val offsetX = (dragOffset.x / preciseCellWidth).toInt()
+                                                val offsetY = (dragOffset.y / preciseCellHeight).toInt()
                                                 
                                                 if (offsetX != 0 || offsetY != 0) {
                                                     val targetIdx = (currentIdx + offsetY * columns + offsetX)
                                                         .coerceIn(0, viewModel.images.size - 1)
                                                     
                                                     if (targetIdx != currentIdx) {
-                                                        // 4. 計算換位造成的座標跳變值並補償
-                                                        // 舉例：如果往右移動了一格，目標位置會向右跳 itemSize，
-                                                        // 我們必須從 dragOffset 中扣除這個跳變，讓圖片在視覺上保持不動
                                                         val fromRow = currentIdx / columns
                                                         val fromCol = currentIdx % columns
                                                         val toRow = targetIdx / columns
                                                         val toCol = targetIdx % columns
                                                         
-                                                        val diffX = (toCol - fromCol) * itemSizeWithSpacing
-                                                        val diffY = (toRow - fromRow) * itemSizeWithSpacing
+                                                        // 使用精確的格線距離進行座標補償
+                                                        val diffX = (toCol - fromCol) * preciseCellWidth
+                                                        val diffY = (toRow - fromRow) * preciseCellHeight
                                                         
                                                         viewModel.moveMedia(context, currentIdx, targetIdx)
                                                         dragOffset = Offset(dragOffset.x - diffX, dragOffset.y - diffY)
