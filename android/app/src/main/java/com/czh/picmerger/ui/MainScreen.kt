@@ -81,7 +81,7 @@ fun MainScreen(viewModel: PicViewModel = viewModel()) {
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text("圖片合併", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
-                Text("v1.0.23", fontSize = 12.sp, color = MaterialTheme.colorScheme.outline)
+                Text("v1.0.24", fontSize = 12.sp, color = MaterialTheme.colorScheme.outline)
             }
 
             ImageSelectorArea(viewModel, onAddClick = {
@@ -97,6 +97,7 @@ fun MainScreen(viewModel: PicViewModel = viewModel()) {
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun ImageSelectorArea(viewModel: PicViewModel, onAddClick: () -> Unit) {
     val context = LocalContext.current
@@ -159,61 +160,58 @@ fun ImageSelectorArea(viewModel: PicViewModel, onAddClick: () -> Unit) {
                     Text("尚未選取檔案", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 14.sp)
                 }
             } else {
-                val listState = rememberLazyListState()
-                var draggedIndex by remember { mutableStateOf<Int?>(null) }
-                var dragOffset by remember { mutableStateOf(0f) }
-
-                LazyRow(
-                    state = listState,
+                // 使用 FlowRow 實現自動換行
+                FlowRow(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(top = 8.dp),
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    contentPadding = PaddingValues(horizontal = 4.dp)
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    itemsIndexed(viewModel.images, key = { _, item -> item.uri }) { index, item ->
-                        val isDragged = index == draggedIndex
-                        val modifier = if (isDragged) {
-                            Modifier
-                                .graphicsLayer(translationX = dragOffset, scaleX = 1.1f, scaleY = 1.1f)
-                                .zIndex(1f)
-                        } else {
-                            Modifier.zIndex(0f)
-                        }
+                    viewModel.images.forEachIndexed { index, item ->
+                        Box(
+                            modifier = Modifier
+                                .size(64.dp)
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(MaterialTheme.colorScheme.surfaceVariant)
+                        ) {
+                            AsyncImage(
+                                model = item.uri,
+                                contentDescription = null,
+                                modifier = Modifier.fillMaxSize(),
+                                contentScale = ContentScale.Crop
+                            )
 
-                        Box(modifier = modifier.pointerInput(item.uri) {
-                            detectDragGesturesAfterLongPress(
-                                onDragStart = { 
-                                    draggedIndex = viewModel.images.indexOfFirst { it.uri == item.uri }
-                                },
-                                onDrag = { change, dragAmount ->
-                                    change.consume()
-                                    dragOffset += dragAmount.x
-                                    val itemWidth = with(density) { 68.dp.toPx() } 
-                                    
-                                    val currentIndex = viewModel.images.indexOfFirst { it.uri == item.uri }
-                                    if (currentIndex != -1) {
-                                        val offsetInItems = (dragOffset / itemWidth).toInt()
-                                        if (offsetInItems != 0) {
-                                            val targetIndex = (currentIndex + offsetInItems).coerceIn(0, viewModel.images.size - 1)
-                                            if (targetIndex != currentIndex) {
-                                                viewModel.moveMedia(context, currentIndex, targetIndex)
-                                                draggedIndex = targetIndex
-                                                // Adjust dragOffset relative to the distance moved
-                                                dragOffset -= (targetIndex - currentIndex) * itemWidth
-                                            }
-                                        }
-                                    }
-                                },
-                                onDragEnd = { draggedIndex = null; dragOffset = 0f },
-                                onDragCancel = { draggedIndex = null; dragOffset = 0f }
-                            )
-                        }) {
-                            MediaThumbnailItem(item, 
-                                onRemove = { viewModel.removeMedia(context, item) }, 
-                                onMoveLeft = { viewModel.moveMedia(context, index, index - 1) },
-                                onMoveRight = { viewModel.moveMedia(context, index, index + 1) }
-                            )
+                            // 移除按鈕
+                            Surface(
+                                onClick = { viewModel.removeMedia(context, item) },
+                                modifier = Modifier
+                                    .align(Alignment.TopEnd)
+                                    .size(20.dp)
+                                    .padding(2.dp),
+                                shape = CircleShape,
+                                color = Color.Black.copy(alpha = 0.5f)
+                            ) {
+                                Icon(
+                                    Icons.Default.Close,
+                                    contentDescription = "Remove",
+                                    tint = Color.White,
+                                    modifier = Modifier.padding(2.dp)
+                                )
+                            }
+                            
+                            // 影片標記
+                            if (item.isVideo) {
+                                Icon(
+                                    Icons.Default.PlayCircle,
+                                    contentDescription = null,
+                                    modifier = Modifier
+                                        .align(Alignment.BottomStart)
+                                        .size(16.dp)
+                                        .padding(2.dp),
+                                    tint = Color.White
+                                )
+                            }
                         }
                     }
                 }
@@ -291,9 +289,6 @@ fun SettingsPanel(viewModel: PicViewModel) {
 
             // Disable advanced settings for videos
             val enableAdvanced = !viewModel.isMediaTypeVideo
-            if (viewModel.isMediaTypeVideo) {
-                Text("⚠️ 影片模式不支援進階設定", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
-            }
 
             // Output Mode
             Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 4.dp)) {
