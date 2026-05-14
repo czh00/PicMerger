@@ -8,8 +8,9 @@ import androidx.compose.animation.*
 import androidx.compose.foundation.*
 import androidx.compose.foundation.gestures.*
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -81,7 +82,7 @@ fun MainScreen(viewModel: PicViewModel = viewModel()) {
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text("圖片合併", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
-                Text("v1.0.24", fontSize = 12.sp, color = MaterialTheme.colorScheme.outline)
+                Text("v1.0.25", fontSize = 12.sp, color = MaterialTheme.colorScheme.outline)
             }
 
             ImageSelectorArea(viewModel, onAddClick = {
@@ -160,23 +161,77 @@ fun ImageSelectorArea(viewModel: PicViewModel, onAddClick: () -> Unit) {
                     Text("尚未選取檔案", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 14.sp)
                 }
             } else {
-                // 使用 FlowRow 實現自動換行
-                FlowRow(
+                var draggedIndex by remember { mutableStateOf<Int?>(null) }
+                var dragOffset by remember { mutableStateOf(Offset.Zero) }
+
+                // 使用 LazyVerticalGrid 實現換行 + 排序
+                LazyVerticalGrid(
+                    columns = GridCells.Adaptive(72.dp),
                     modifier = Modifier
                         .fillMaxWidth()
+                        .heightIn(max = 400.dp)
                         .padding(top = 8.dp),
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                    contentPadding = PaddingValues(4.dp)
                 ) {
-                    viewModel.images.forEachIndexed { index, item ->
+                    itemsIndexed(viewModel.images, key = { _, mItem -> mItem.uri }) { index, mItem ->
+                        val isDragged = index == draggedIndex
+                        val itemModifier = if (isDragged) {
+                            Modifier
+                                .zIndex(1f)
+                                .graphicsLayer {
+                                    translationX = dragOffset.x
+                                    translationY = dragOffset.y
+                                    scaleX = 1.15f
+                                    scaleY = 1.15f
+                                    shadowElevation = 8.dp.toPx()
+                                }
+                        } else {
+                            Modifier.zIndex(0f)
+                        }
+
                         Box(
-                            modifier = Modifier
-                                .size(64.dp)
+                            modifier = itemModifier
+                                .size(72.dp)
+                                .pointerInput(mItem.uri) {
+                                    detectDragGesturesAfterLongPress(
+                                        onDragStart = { 
+                                            draggedIndex = index
+                                            dragOffset = Offset.Zero
+                                        },
+                                        onDrag = { change, dragAmount ->
+                                            change.consume()
+                                            dragOffset += dragAmount
+                                            
+                                            // 簡單的 2D 排序邏輯：根據位移估算目標位置
+                                            val itemSizePx = with(density) { 80.dp.toPx() } // 72dp + spacing
+                                            val offsetX = (dragOffset.x / itemSizePx).toInt()
+                                            val offsetY = (dragOffset.y / itemSizePx).toInt()
+                                            
+                                            if (offsetX != 0 || offsetY != 0) {
+                                                // 粗略計算在網格中的偏移量
+                                                val columns = (size.width / itemSizePx).toInt().coerceAtLeast(1)
+                                                val targetIndex = (index + offsetY * columns + offsetX)
+                                                    .coerceIn(0, viewModel.images.size - 1)
+                                                
+                                                if (targetIndex != index && targetIndex != draggedIndex) {
+                                                    viewModel.moveMedia(context, index, targetIndex)
+                                                    draggedIndex = targetIndex
+                                                    // 重置位移以維持相對位置
+                                                    dragOffset = Offset.Zero 
+                                                }
+                                            }
+                                        },
+                                        onDragEnd = { draggedIndex = null; dragOffset = Offset.Zero },
+                                        onDragCancel = { draggedIndex = null; dragOffset = Offset.Zero }
+                                    )
+                                }
                                 .clip(RoundedCornerShape(8.dp))
                                 .background(MaterialTheme.colorScheme.surfaceVariant)
                         ) {
                             AsyncImage(
-                                model = item.uri,
+                                model = mItem.uri,
                                 contentDescription = null,
                                 modifier = Modifier.fillMaxSize(),
                                 contentScale = ContentScale.Crop
@@ -184,7 +239,7 @@ fun ImageSelectorArea(viewModel: PicViewModel, onAddClick: () -> Unit) {
 
                             // 移除按鈕
                             Surface(
-                                onClick = { viewModel.removeMedia(context, item) },
+                                onClick = { viewModel.removeMedia(context, mItem) },
                                 modifier = Modifier
                                     .align(Alignment.TopEnd)
                                     .size(20.dp)
@@ -200,15 +255,11 @@ fun ImageSelectorArea(viewModel: PicViewModel, onAddClick: () -> Unit) {
                                 )
                             }
                             
-                            // 影片標記
-                            if (item.isVideo) {
+                            if (mItem.isVideo) {
                                 Icon(
                                     Icons.Default.PlayCircle,
                                     contentDescription = null,
-                                    modifier = Modifier
-                                        .align(Alignment.BottomStart)
-                                        .size(16.dp)
-                                        .padding(2.dp),
+                                    modifier = Modifier.align(Alignment.BottomStart).size(16.dp).padding(2.dp),
                                     tint = Color.White
                                 )
                             }
