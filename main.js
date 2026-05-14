@@ -213,9 +213,6 @@ function setupEventListeners() {
         elements.btnReset.addEventListener('click', reset);
     }
     
-    if (elements.btnSave) {
-        elements.btnSave.addEventListener('click', saveImageToStorage);
-    }
     if (elements.btnShare) {
         elements.btnShare.addEventListener('click', shareImageToDevice);
     }
@@ -704,7 +701,7 @@ function previewRender() {
 }
 
 async function init() {
-    console.log("PicMerger v1.0.18 Initializing...");
+    console.log("PicMerger v1.0.20 Initializing...");
     loadPlugins(); 
     initElements();
     
@@ -823,8 +820,11 @@ async function render() {
 
 async function saveImageToStorage() {
     try {
-        elements.btnSave.disabled = true;
-        elements.btnSave.textContent = '正在儲存至外部儲存...';
+        const statusBtn = elements.btnMerge;
+        if (statusBtn) {
+            statusBtn.disabled = true;
+            statusBtn.textContent = '正在儲存檔案...';
+        }
 
         const dataUrl = elements.canvas.toDataURL('image/png', 0.9);
 
@@ -832,7 +832,6 @@ async function saveImageToStorage() {
             const base64Data = dataUrl.split(',')[1];
             const fileName = `PicMerger_${Date.now()}.png`;
 
-            // 改用 Filesystem 寫入 Documents 檔案夾，這在 Android 上最穩定
             await Filesystem.writeFile({
                 path: `PicMerger/${fileName}`,
                 data: base64Data,
@@ -845,27 +844,31 @@ async function saveImageToStorage() {
                 duration: 'long'
             });
             
-            elements.btnSave.textContent = '✅ 已儲存至文件';
-            alert(`儲存成功！\n圖片已存於「文件/PicMerger/」資料夾中。\n若相簿未立即出現，請手動前往查看或使用分享按鈕。`);
+            if (statusBtn) statusBtn.textContent = '✅ 已儲存至文件';
+            alert(`儲存成功！\n圖片已存於「文件/PicMerger/」資料夾中。`);
         } else {
             const link = document.createElement('a');
             link.href = dataUrl;
             link.download = `PicMerger_${Date.now()}.png`;
             link.click();
-            elements.btnSave.textContent = '💾 儲存成功';
+            if (statusBtn) statusBtn.textContent = '💾 儲存成功';
+        }
+
+        // 恢復按鈕狀態
+        if (statusBtn) {
+            setTimeout(() => {
+                const hasVideo = state.images.some(img => img.isVideo);
+                statusBtn.textContent = hasVideo ? '🎬 生成合併影片' : '💾 儲存合併圖';
+                statusBtn.disabled = false;
+            }, 2000);
         }
     } catch (err) {
         console.error('儲存失敗:', err);
-        alert('儲存失敗: ' + err.message);
-        elements.btnSave.textContent = '❌ 儲存失敗';
-    } finally {
-        setTimeout(() => {
-            elements.btnSave.disabled = false;
-            elements.btnSave.textContent = '💾 直接儲存至文件資料夾';
-            if (elements.btnShare) {
-                elements.btnShare.disabled = !state.canShare;
-            }
-        }, 3000);
+        alert('儲存失敗: ' + (err.message || err));
+        if (elements.btnMerge) {
+            elements.btnMerge.disabled = false;
+            elements.btnMerge.textContent = '❌ 儲存失敗';
+        }
     }
 }
 
