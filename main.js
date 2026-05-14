@@ -185,11 +185,12 @@ function setupEventListeners() {
             elements.btnMerge.disabled = true;
             elements.btnMerge.textContent = '正在渲染畫布...';
             
-            setTimeout(() => {
+            setTimeout(async () => {
                 try {
-                    render();
+                    await render();
                     updateMergeButton(true);
                 } catch (err) {
+                    console.error('Render error:', err);
                     alert('渲染失敗: ' + err.message);
                     updateMergeButton(false);
                 } finally {
@@ -240,9 +241,11 @@ function updateMergeButton(merged) {
         if (merged) {
             elements.btnMerge.textContent = '💾 儲存合併圖';
             elements.btnMerge.classList.add('btn-save-mode');
+            if (elements.btnSave) elements.btnSave.style.display = 'none';
         } else {
             elements.btnMerge.textContent = '生成合併圖';
             elements.btnMerge.classList.remove('btn-save-mode');
+            if (elements.btnSave) elements.btnSave.style.display = 'block';
         }
     }
 }
@@ -690,7 +693,7 @@ function previewRender() {
 }
 
 async function init() {
-    console.log("PicMerger v1.0.15 Initializing...");
+    console.log("PicMerger v1.0.17 Initializing...");
     loadPlugins(); 
     initElements();
     
