@@ -24,7 +24,8 @@ const state = {
     baseWidth: 0, // 原始總寬度
     baseHeight: 0, // 原始總高度
     format: 'image/png', // 輸出格式
-    canShare: !!navigator.share // 預先偵測分享功能
+    canShare: !!navigator.share, // 預先偵測分享功能
+    isMerged: false // 是否已生成合併圖
 };
 
 let elements = {};
@@ -113,6 +114,7 @@ function setupEventListeners() {
             state.gridCols = parseInt(e.target.value) || 1;
             const valDisplay = document.getElementById('grid-cols-value');
             if (valDisplay) valDisplay.textContent = state.gridCols;
+            updateMergeButton(false);
             previewRender();
         });
     }
@@ -126,6 +128,7 @@ function setupEventListeners() {
                 state.outputScale = 100;
                 modeGroup.querySelectorAll('button').forEach(b => b.classList.remove('active'));
                 btn.classList.add('active');
+                updateMergeButton(false);
                 syncOutputValue();
                 previewRender();
             });
@@ -148,6 +151,7 @@ function setupEventListeners() {
             const label = document.getElementById('output-value-label');
             if (label) label.textContent = Math.round(val) + (state.outputMode === 'scale' ? '%' : 'px');
             
+            updateMergeButton(false);
             previewRender();
         });
     }
@@ -155,6 +159,7 @@ function setupEventListeners() {
     if (elements.scaleModeSelect) {
         elements.scaleModeSelect.addEventListener('change', (e) => {
             state.scaleMode = e.target.value;
+            updateMergeButton(false);
             previewRender();
         });
     }
@@ -162,6 +167,7 @@ function setupEventListeners() {
     if (elements.bgColorInput) {
         elements.bgColorInput.addEventListener('change', (e) => {
             state.bgColor = e.target.value;
+            updateMergeButton(false);
             previewRender();
         });
     }
@@ -170,17 +176,24 @@ function setupEventListeners() {
         elements.btnMerge.addEventListener('click', async () => {
             if (state.images.length < 2) return;
             
+            // 如果已經是儲存模式，直接執行儲存
+            if (state.isMerged) {
+                saveImageToStorage();
+                return;
+            }
+
             elements.btnMerge.disabled = true;
             elements.btnMerge.textContent = '正在渲染畫布...';
             
             setTimeout(() => {
                 try {
                     render();
+                    updateMergeButton(true);
                 } catch (err) {
                     alert('渲染失敗: ' + err.message);
+                    updateMergeButton(false);
                 } finally {
                     elements.btnMerge.disabled = false;
-                    elements.btnMerge.textContent = '生成合併圖';
                 }
             }, 100);
         });
@@ -215,8 +228,22 @@ function setupEventListeners() {
     if (elements.btnApplySort) {
         elements.btnApplySort.addEventListener('click', () => {
             closeSortModal();
+            updateMergeButton(false);
             if (elements.btnMerge) elements.btnMerge.click(); // Trigger re-render
         });
+    }
+}
+
+function updateMergeButton(merged) {
+    state.isMerged = merged;
+    if (elements.btnMerge) {
+        if (merged) {
+            elements.btnMerge.textContent = '💾 儲存合併圖';
+            elements.btnMerge.classList.add('btn-save-mode');
+        } else {
+            elements.btnMerge.textContent = '生成合併圖';
+            elements.btnMerge.classList.remove('btn-save-mode');
+        }
     }
 }
 
@@ -286,6 +313,7 @@ async function handleFiles(files) {
     if (newImages.length > 0) {
         state.images = [...state.images, ...newImages];
         updateUI();
+        updateMergeButton(false);
         elements.previewInfo.textContent = `已載入 ${state.images.length} 張圖片。`;
         elements.downloadSection.style.display = 'none';
         
@@ -318,6 +346,7 @@ function updateUI() {
             URL.revokeObjectURL(state.images[index].src);
             state.images.splice(index, 1);
             updateUI();
+            updateMergeButton(false);
             elements.downloadSection.style.display = 'none';
         });
 
@@ -882,6 +911,7 @@ function reset() {
     state.images.forEach(item => URL.revokeObjectURL(item.src));
     state.images = [];
     updateUI();
+    updateMergeButton(false);
     elements.ctx.clearRect(0, 0, elements.canvas.width, elements.canvas.height);
     elements.previewInfo.textContent = '請上傳圖片以開始';
     elements.downloadSection.style.display = 'none';
