@@ -535,25 +535,6 @@ function handleTouchEnd(e) {
     });
 }
 
-function drawImageCover(ctx, img, x, y, w, h) {
-    const imgRatio = img.width / img.height;
-    const cellRatio = w / h;
-    let sx, sy, sw, sh;
-
-    if (imgRatio > cellRatio) {
-        sh = img.height;
-        sw = sh * cellRatio;
-        sx = (img.width - sw) / 2;
-        sy = 0;
-    } else {
-        sw = img.width;
-        sh = sw / cellRatio;
-        sx = 0;
-        sy = (img.height - sh) / 2;
-    }
-    ctx.drawImage(img, sx, sy, sw, sh, x, y, w, h);
-}
-
 // 輔助函式：等比例縮放繪製 (Contain - 確保絕對不變形，不裁切)
 function drawImageContain(ctx, img, x, y, w, h) {
     const imgRatio = img.width / img.height;
@@ -576,6 +557,7 @@ function drawImageContain(ctx, img, x, y, w, h) {
     ctx.drawImage(img, 0, 0, img.width, img.height, targetX, targetY, targetW, targetH);
 }
 
+// JS 即時預覽引擎
 function previewRender() {
     if (state.images.length < 1) return;
     
@@ -585,6 +567,7 @@ function previewRender() {
     const cols = state.gridCols;
     const totalImgs = imgs.length;
 
+    // 動態偵測拼接模式
     let effectiveDirection = state.direction;
     if (state.direction === 'grid') {
         if (cols === 1) effectiveDirection = 'vertical';
@@ -650,7 +633,7 @@ function previewRender() {
                 drawH = item.height * (canvasWidth / item.width);
                 x = 0; y = offset; offset += drawH;
             }
-            elements.ctx.drawImage(item.img, x, y, drawW, drawH);
+            drawImageContain(elements.ctx, item.img, x, y, drawW, drawH);
         });
     }
 
@@ -661,7 +644,7 @@ function previewRender() {
 }
 
 async function init() {
-    console.log("PicMerger v1.0.13 Initializing...");
+    console.log("PicMerger v1.0.14 Initializing...");
     loadPlugins(); 
     initElements();
     
@@ -696,7 +679,6 @@ async function render() {
 
     try {
         const dirMap = { 'horizontal': 0, 'vertical': 1, 'grid': 2 };
-        
         let effectiveDirValue = dirMap[state.direction];
         let isGrid = false;
         if (state.direction === 'grid') {
@@ -705,8 +687,9 @@ async function render() {
             else isGrid = true;
         }
 
+        // 網格模式強制使用 JS 引擎渲染，以保證比例鎖定且不裁切
         if (isGrid || !merge_images_fn) {
-            console.info("使用 JS 引擎渲染以保證比例鎖定...");
+            console.info("使用 JS 高品質引擎渲染 (Contain)...");
             previewRender(); 
             const dataUrl = elements.canvas.toDataURL('image/png');
             const blob = await (await fetch(dataUrl)).blob();
@@ -714,7 +697,7 @@ async function render() {
             
             elements.downloadSection.style.display = 'block';
             if (elements.btnShare) elements.btnShare.disabled = !state.canShare;
-            elements.previewInfo.textContent = `處理完成！解析度: ${elements.canvas.width}x${elements.canvas.height} (比例鎖定)`;
+            elements.previewInfo.textContent = `處理完成！解析度: ${elements.canvas.width}x${elements.canvas.height} (完整顯示)`;
             elements.btnMerge.disabled = false;
             syncOutputValue();
             return;
