@@ -1,6 +1,7 @@
 package com.czh.picmerger.ui
 
 import android.graphics.Bitmap
+import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
@@ -82,7 +83,7 @@ fun MainScreen(viewModel: PicViewModel = viewModel()) {
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text("圖片合併", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
-                Text("v1.0.25", fontSize = 12.sp, color = MaterialTheme.colorScheme.outline)
+                Text("v1.0.26", fontSize = 12.sp, color = MaterialTheme.colorScheme.outline)
             }
 
             ImageSelectorArea(viewModel, onAddClick = {
@@ -161,7 +162,7 @@ fun ImageSelectorArea(viewModel: PicViewModel, onAddClick: () -> Unit) {
                     Text("尚未選取檔案", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 14.sp)
                 }
             } else {
-                var draggedIndex by remember { mutableStateOf<Int?>(null) }
+                var draggedUri by remember { mutableStateOf<Uri?>(null) }
                 var dragOffset by remember { mutableStateOf(Offset.Zero) }
 
                 // 使用 LazyVerticalGrid 實現換行 + 排序
@@ -176,19 +177,19 @@ fun ImageSelectorArea(viewModel: PicViewModel, onAddClick: () -> Unit) {
                     contentPadding = PaddingValues(4.dp)
                 ) {
                     itemsIndexed(viewModel.images, key = { _, mItem -> mItem.uri }) { index, mItem ->
-                        val isDragged = index == draggedIndex
+                        val isDragged = mItem.uri == draggedUri
                         val itemModifier = if (isDragged) {
                             Modifier
-                                .zIndex(1f)
+                                .zIndex(10f) // 確保拖移中的項目在最上層
                                 .graphicsLayer {
                                     translationX = dragOffset.x
                                     translationY = dragOffset.y
-                                    scaleX = 1.15f
-                                    scaleY = 1.15f
-                                    shadowElevation = 8.dp.toPx()
+                                    scaleX = 1.2f
+                                    scaleY = 1.2f
+                                    shadowElevation = 12.dp.toPx()
                                 }
                         } else {
-                            Modifier.zIndex(0f)
+                            Modifier.zIndex(1f)
                         }
 
                         Box(
@@ -197,34 +198,50 @@ fun ImageSelectorArea(viewModel: PicViewModel, onAddClick: () -> Unit) {
                                 .pointerInput(mItem.uri) {
                                     detectDragGesturesAfterLongPress(
                                         onDragStart = { 
-                                            draggedIndex = index
+                                            draggedUri = mItem.uri
                                             dragOffset = Offset.Zero
                                         },
                                         onDrag = { change, dragAmount ->
                                             change.consume()
                                             dragOffset += dragAmount
                                             
-                                            // 簡單的 2D 排序邏輯：根據位移估算目標位置
-                                            val itemSizePx = with(density) { 80.dp.toPx() } // 72dp + spacing
-                                            val offsetX = (dragOffset.x / itemSizePx).toInt()
-                                            val offsetY = (dragOffset.y / itemSizePx).toInt()
-                                            
-                                            if (offsetX != 0 || offsetY != 0) {
-                                                // 粗略計算在網格中的偏移量
-                                                val columns = (size.width / itemSizePx).toInt().coerceAtLeast(1)
-                                                val targetIndex = (index + offsetY * columns + offsetX)
-                                                    .coerceIn(0, viewModel.images.size - 1)
+                                            // 穩定排序邏輯：
+                                            // 1. 找到被拖移項目的「當前」真實索引
+                                            val currentIdx = viewModel.images.indexOfFirst { it.uri == draggedUri }
+                                            if (currentIdx != -1) {
+                                                val itemSizeWithSpacing = with(density) { 80.dp.toPx() } // 72dp + 8dp spacing
                                                 
-                                                if (targetIndex != index && targetIndex != draggedIndex) {
-                                                    viewModel.moveMedia(context, index, targetIndex)
-                                                    draggedIndex = targetIndex
-                                                    // 重置位移以維持相對位置
-                                                    dragOffset = Offset.Zero 
+                                                // 2. 計算目前的網格列數
+                                                val columns = (size.width / itemSizeWithSpacing).toInt().coerceAtLeast(1)
+                                                
+                                                // 3. 根據累計位移計算目標索引偏移量
+                                                val offsetX = (dragOffset.x / itemSizeWithSpacing).toInt()
+                                                val offsetY = (dragOffset.y / itemSizeWithSpacing).toInt()
+                                                
+                                                if (offsetX != 0 || offsetY != 0) {
+                                                    val targetIdx = (currentIdx + offsetY * columns + offsetX)
+                                                        .coerceIn(0, viewModel.images.size - 1)
+                                                    
+                                                    if (targetIdx != currentIdx) {
+                                                        // 4. 計算換位造成的座標跳變值並補償
+                                                        // 舉例：如果往右移動了一格，目標位置會向右跳 itemSize，
+                                                        // 我們必須從 dragOffset 中扣除這個跳變，讓圖片在視覺上保持不動
+                                                        val fromRow = currentIdx / columns
+                                                        val fromCol = currentIdx % columns
+                                                        val toRow = targetIdx / columns
+                                                        val toCol = targetIdx % columns
+                                                        
+                                                        val diffX = (toCol - fromCol) * itemSizeWithSpacing
+                                                        val diffY = (toRow - fromRow) * itemSizeWithSpacing
+                                                        
+                                                        viewModel.moveMedia(context, currentIdx, targetIdx)
+                                                        dragOffset = Offset(dragOffset.x - diffX, dragOffset.y - diffY)
+                                                    }
                                                 }
                                             }
                                         },
-                                        onDragEnd = { draggedIndex = null; dragOffset = Offset.Zero },
-                                        onDragCancel = { draggedIndex = null; dragOffset = Offset.Zero }
+                                        onDragEnd = { draggedUri = null; dragOffset = Offset.Zero },
+                                        onDragCancel = { draggedUri = null; dragOffset = Offset.Zero }
                                     )
                                 }
                                 .clip(RoundedCornerShape(8.dp))
