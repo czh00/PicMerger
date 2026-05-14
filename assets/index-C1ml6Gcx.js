@@ -20,13 +20,13 @@
             fetch(r.href, l);
         }
     })();
-    const q = "modulepreload", F = function(n, t) {
+    const Z = "modulepreload", q = function(n, t) {
         return new URL(n, t).href;
-    }, B = {}, G = function(t, a, i) {
+    }, D = {}, F = function(t, a, i) {
         let r = Promise.resolve();
         if (a && a.length > 0) {
             let f = function(m) {
-                return Promise.all(m.map((d)=>Promise.resolve(d).then((s)=>({
+                return Promise.all(m.map((c)=>Promise.resolve(c).then((s)=>({
                             status: "fulfilled",
                             value: s
                         }), (s)=>({
@@ -36,16 +36,16 @@
             };
             const u = document.getElementsByTagName("link"), b = document.querySelector("meta[property=csp-nonce]"), v = b?.nonce || b?.getAttribute("nonce");
             r = f(a.map((m)=>{
-                if (m = F(m, i), m in B) return;
-                B[m] = !0;
-                const d = m.endsWith(".css"), s = d ? '[rel="stylesheet"]' : "";
+                if (m = q(m, i), m in D) return;
+                D[m] = !0;
+                const c = m.endsWith(".css"), s = c ? '[rel="stylesheet"]' : "";
                 if (!!i) for(let g = u.length - 1; g >= 0; g--){
                     const p = u[g];
-                    if (p.href === m && (!d || p.rel === "stylesheet")) return;
+                    if (p.href === m && (!c || p.rel === "stylesheet")) return;
                 }
                 else if (document.querySelector(`link[href="${m}"]${s}`)) return;
                 const h = document.createElement("link");
-                if (h.rel = d ? "stylesheet" : q, d || (h.as = "script"), h.crossOrigin = "", h.href = m, v && h.setAttribute("nonce", v), document.head.appendChild(h), d) return new Promise((g, p)=>{
+                if (h.rel = c ? "stylesheet" : Z, c || (h.as = "script"), h.crossOrigin = "", h.href = m, v && h.setAttribute("nonce", v), document.head.appendChild(h), c) return new Promise((g, p)=>{
                     h.addEventListener("load", g), h.addEventListener("error", ()=>p(new Error(`Unable to preload CSS for ${m}`)));
                 });
             }));
@@ -62,10 +62,10 @@
         });
     };
     console.log("DEBUG: main.js loading...");
-    window.handleFiles = R;
-    let U, $, Y, J;
-    async function X() {}
-    let P = null;
+    window.handleFiles = P;
+    let k, U, G, Y;
+    async function J() {}
+    let x = null;
     const o = {
         images: [],
         direction: "grid",
@@ -81,7 +81,7 @@
         isMerged: !1
     };
     let e = {};
-    function W() {
+    function $() {
         e = {
             dropZone: document.getElementById("main-drop-zone"),
             fileInput: document.getElementById("main-file-input"),
@@ -108,7 +108,7 @@
             btnApplySort: document.getElementById("btn-apply-sort")
         }, console.log("Elements initialized:", Object.keys(e).filter((n)=>e[n]));
     }
-    function K() {
+    function X() {
         document.addEventListener("click", (t)=>{
             if (e.fileInput && t.target === e.fileInput) return;
             t.target.closest("#main-drop-zone") && e.fileInput && (console.log("Global Click Delegate Triggered"), e.fileInput.click());
@@ -119,76 +119,70 @@
         }), e.dropZone.addEventListener("dragleave", (t)=>{
             t.preventDefault(), t.stopPropagation(), e.dropZone.classList.remove("drag-over");
         }), e.dropZone.addEventListener("drop", (t)=>{
-            t.preventDefault(), t.stopPropagation(), e.dropZone.classList.remove("drag-over"), console.log("Drop event triggered"), t.dataTransfer && t.dataTransfer.files && R(t.dataTransfer.files);
+            t.preventDefault(), t.stopPropagation(), e.dropZone.classList.remove("drag-over"), console.log("Drop event triggered"), t.dataTransfer && t.dataTransfer.files && P(t.dataTransfer.files);
         }), e.fileInput.addEventListener("change", (t)=>{
-            R(t.target.files);
+            P(t.target.files);
         })) : console.error("Drop zone or file input not found!"), e.gridColsInput && e.gridColsInput.addEventListener("input", (t)=>{
             o.gridCols = parseInt(t.target.value) || 1;
             const a = document.getElementById("grid-cols-value");
-            a && (a.textContent = o.gridCols), y(!1), S();
+            a && (a.textContent = o.gridCols), L();
         });
         const n = document.getElementById("output-mode-group");
         n && n.querySelectorAll("button").forEach((t)=>{
             t.addEventListener("click", ()=>{
-                o.outputMode = t.dataset.value, o.outputScale = 100, n.querySelectorAll("button").forEach((a)=>a.classList.remove("active")), t.classList.add("active"), y(!1), C(), S();
+                o.outputMode = t.dataset.value, o.outputScale = 100, n.querySelectorAll("button").forEach((a)=>a.classList.remove("active")), t.classList.add("active"), C(), L();
             });
         }), e.outputValueInput && e.outputValueInput.addEventListener("input", (t)=>{
             const a = parseFloat(t.target.value);
             if (!a) return;
             o.outputMode === "scale" ? o.outputScale = a : o.outputMode === "width" && o.baseWidth ? o.outputScale = a / o.baseWidth * 100 : o.outputMode === "height" && o.baseHeight && (o.outputScale = a / o.baseHeight * 100);
             const i = document.getElementById("output-value-label");
-            i && (i.textContent = Math.round(a) + (o.outputMode === "scale" ? "%" : "px")), y(!1), S();
+            i && (i.textContent = Math.round(a) + (o.outputMode === "scale" ? "%" : "px")), L();
         }), e.scaleModeSelect && e.scaleModeSelect.addEventListener("change", (t)=>{
-            o.scaleMode = t.target.value, y(!1), S();
+            o.scaleMode = t.target.value, L();
         }), e.bgColorInput && e.bgColorInput.addEventListener("change", (t)=>{
-            o.bgColor = t.target.value, y(!1), S();
-        }), e.btnMerge && e.btnMerge.addEventListener("click", async ()=>{
-            if (!(o.images.length < 2)) {
-                if (o.isMerged) {
-                    T();
-                    return;
+            o.bgColor = t.target.value, L();
+        }), e.btnMerge && (e.btnMerge.textContent = "💾 儲存合併圖", e.btnMerge.addEventListener("click", async ()=>{
+            if (o.images.length < 1) return;
+            e.btnMerge.disabled = !0;
+            const t = e.btnMerge.textContent;
+            e.btnMerge.textContent = "正在準備檔案...", setTimeout(async ()=>{
+                try {
+                    await te(), await T();
+                } catch (a) {
+                    console.error("Save error:", a), alert("儲存失敗: " + (a.message || a));
+                } finally{
+                    e.btnMerge.disabled = !1, e.btnMerge.textContent = t;
                 }
-                e.btnMerge.disabled = !0, e.btnMerge.textContent = "正在渲染畫布...", setTimeout(async ()=>{
-                    try {
-                        await ne(), y(!0);
-                    } catch (t) {
-                        console.error("Render error:", t), alert("渲染失敗: " + t.message), y(!1);
-                    } finally{
-                        e.btnMerge.disabled = !1;
-                    }
-                }, 100);
-            }
-        }), e.btnReset && e.btnReset.addEventListener("click", oe), e.btnSave && e.btnSave.addEventListener("click", T), e.btnShare && e.btnShare.addEventListener("click", ae), e.canvasWrapper && e.canvasWrapper.addEventListener("click", ()=>{
-            o.images.length > 0 && ee();
-        }), e.btnCloseModal && e.btnCloseModal.addEventListener("click", x), e.sortModal && e.sortModal.addEventListener("click", (t)=>{
-            t.target === e.sortModal && x();
+            }, 50);
+        })), e.btnReset && e.btnReset.addEventListener("click", ae), e.btnSave && e.btnSave.addEventListener("click", T), e.btnShare && e.btnShare.addEventListener("click", ne), e.canvasWrapper && e.canvasWrapper.addEventListener("click", ()=>{
+            o.images.length > 0 && Q();
+        }), e.btnCloseModal && e.btnCloseModal.addEventListener("click", M), e.sortModal && e.sortModal.addEventListener("click", (t)=>{
+            t.target === e.sortModal && M();
         }), e.btnApplySort && e.btnApplySort.addEventListener("click", ()=>{
-            x(), y(!1), e.btnMerge && e.btnMerge.click();
+            M(), L();
         });
     }
-    function y(n) {
-        o.isMerged = n, e.btnMerge && (n ? (e.btnMerge.textContent = "💾 儲存合併圖", e.btnMerge.classList.add("btn-save-mode"), e.btnSave && (e.btnSave.style.display = "none")) : (e.btnMerge.textContent = "生成合併圖", e.btnMerge.classList.remove("btn-save-mode"), e.btnSave && (e.btnSave.style.display = "block")));
-    }
-    async function R(n) {
+    async function P(n) {
         if (console.log("Handling files:", n ? n.length : 0), !n || n.length === 0) return;
-        (!e || !e.imageList) && (console.log("Lazy-initializing elements..."), W()), e.previewInfo && (e.previewInfo.textContent = "正在處理並修正圖片方向...");
+        (!e || !e.imageList) && (console.log("Lazy-initializing elements..."), $()), e.previewInfo && (e.previewInfo.textContent = "正在處理並修正圖片方向...");
         const t = [];
         for (const a of Array.from(n))if (a.type.startsWith("image/") || /\.(jpg|jpeg|png|webp|gif|bmp)$/i.test(a.name)) try {
             const r = await new Promise((l, f)=>{
                 const u = new Image, b = URL.createObjectURL(a);
                 u.onload = ()=>{
                     const v = document.createElement("canvas");
-                    v.width = u.width, v.height = u.height, v.getContext("2d").drawImage(u, 0, 0, v.width, v.height), v.toBlob((d)=>{
-                        const s = URL.createObjectURL(d), c = new Image;
-                        c.onload = ()=>{
+                    v.width = u.width, v.height = u.height, v.getContext("2d").drawImage(u, 0, 0, v.width, v.height), v.toBlob((c)=>{
+                        const s = URL.createObjectURL(c), d = new Image;
+                        d.onload = ()=>{
                             URL.revokeObjectURL(b), l({
-                                img: c,
+                                img: d,
                                 name: a.name,
-                                width: c.width,
-                                height: c.height,
+                                width: d.width,
+                                height: d.height,
                                 src: s
                             });
-                        }, c.src = s;
+                        }, d.src = s;
                     }, "image/png");
                 }, u.onerror = ()=>{
                     URL.revokeObjectURL(b), f(new Error(`圖片讀取失敗: ${a.name}`));
@@ -201,8 +195,8 @@
         t.length > 0 && (o.images = [
             ...o.images,
             ...t
-        ], I(), y(!1), e.previewInfo.textContent = `已載入 ${o.images.length} 張圖片。`, e.downloadSection.style.display = "none", setTimeout(()=>{
-            console.log("Auto-triggering preview..."), S();
+        ], I(), e.previewInfo.textContent = `已載入 ${o.images.length} 張圖片。`, e.downloadSection.style.display = "none", setTimeout(()=>{
+            console.log("Auto-triggering preview..."), L();
         }, 100));
     }
     function I() {
@@ -212,17 +206,17 @@
             <img src="${n.src}" alt="Thumb" />
             <button class="btn-remove" title="移除圖片">✕</button>
         `, a.querySelector(".btn-remove").addEventListener("click", (i)=>{
-                i.stopPropagation(), URL.revokeObjectURL(o.images[t].src), o.images.splice(t, 1), I(), y(!1), e.downloadSection.style.display = "none";
-            }), a.addEventListener("dragstart", H), a.addEventListener("dragover", A), a.addEventListener("drop", j), a.addEventListener("dragend", _), a.addEventListener("dragenter", N), a.addEventListener("dragleave", O), a.addEventListener("touchstart", z, {
+                i.stopPropagation(), URL.revokeObjectURL(o.images[t].src), o.images.splice(t, 1), I(), e.downloadSection.style.display = "none";
+            }), a.addEventListener("dragstart", W), a.addEventListener("dragover", H), a.addEventListener("drop", O), a.addEventListener("dragend", j), a.addEventListener("dragenter", A), a.addEventListener("dragleave", N), a.addEventListener("touchstart", _, {
                 passive: !1
-            }), a.addEventListener("touchmove", V, {
+            }), a.addEventListener("touchmove", z, {
                 passive: !1
-            }), a.addEventListener("touchend", Z, {
+            }), a.addEventListener("touchend", V, {
                 passive: !1
             }), e.imageList.appendChild(a);
-        }), e.btnMerge.disabled = o.images.length < 2, Q();
+        }), e.btnMerge.disabled = o.images.length < 2, K();
     }
-    function Q() {
+    function K() {
         if (e.gridColsInput) {
             const n = o.images.length || 1;
             e.gridColsInput.max = n, o.gridCols > n && (o.gridCols = n), e.gridColsInput.value = o.gridCols;
@@ -237,86 +231,86 @@
         const a = o.outputScale / 100, i = Math.round(o.baseWidth * a), r = Math.round(o.baseHeight * a);
         o.outputMode === "scale" ? (e.outputValueInput.max = 100, t = Math.round(o.outputScale), n && (n.innerHTML = `${t}% <small>(${i} x ${r})</small>`)) : o.outputMode === "width" ? (e.outputValueInput.max = o.baseWidth * 2, t = i, n && (n.innerHTML = `${t}px <small>(高: ${r}px)</small>`)) : o.outputMode === "height" && (e.outputValueInput.max = o.baseHeight * 2, t = r, n && (n.innerHTML = `${t}px <small>(寬: ${i}px)</small>`)), e.outputValueInput.value = t;
     }
-    function ee() {
-        D(), e.sortModal.classList.add("show"), document.body.style.overflow = "hidden";
+    function Q() {
+        R(), e.sortModal.classList.add("show"), document.body.style.overflow = "hidden";
     }
-    function x() {
+    function M() {
         e.sortModal.classList.remove("show"), document.body.style.overflow = "";
     }
-    function D() {
+    function R() {
         e.sortList.innerHTML = "", o.images.forEach((n, t)=>{
             const a = document.createElement("div");
             a.className = "sort-item", a.draggable = !0, a.dataset.index = t, a.innerHTML = `
             <img src="${n.src}" alt="Thumb" />
             <div class="info">${n.name}</div>
-        `, a.addEventListener("dragstart", H), a.addEventListener("dragover", A), a.addEventListener("drop", j), a.addEventListener("dragend", _), a.addEventListener("dragenter", N), a.addEventListener("dragleave", O), a.addEventListener("touchstart", z, {
+        `, a.addEventListener("dragstart", W), a.addEventListener("dragover", H), a.addEventListener("drop", O), a.addEventListener("dragend", j), a.addEventListener("dragenter", A), a.addEventListener("dragleave", N), a.addEventListener("touchstart", _, {
                 passive: !1
-            }), a.addEventListener("touchmove", V, {
+            }), a.addEventListener("touchmove", z, {
                 passive: !1
-            }), a.addEventListener("touchend", Z, {
+            }), a.addEventListener("touchend", V, {
                 passive: !1
             }), e.sortList.appendChild(a);
         });
     }
-    let L = null;
-    function H(n) {
-        L = parseInt(this.dataset.index), this.classList.add("dragging"), n.dataTransfer.effectAllowed = "move", n.dataTransfer.setData("text/plain", L);
+    let y = null;
+    function W(n) {
+        y = parseInt(this.dataset.index), this.classList.add("dragging"), n.dataTransfer.effectAllowed = "move", n.dataTransfer.setData("text/plain", y);
     }
-    function A(n) {
+    function H(n) {
         return n.preventDefault && n.preventDefault(), n.dataTransfer.dropEffect = "move", !1;
     }
-    function N(n) {
+    function A(n) {
         this.classList.add("drag-over");
     }
-    function O(n) {
+    function N(n) {
         this.classList.remove("drag-over");
     }
-    function j(n) {
+    function O(n) {
         n.stopPropagation && n.stopPropagation();
         const t = parseInt(this.dataset.index);
-        if (L !== t) {
-            const a = o.images.splice(L, 1)[0];
-            o.images.splice(t, 0, a), I(), D(), e.downloadSection.style.display === "block" && S();
+        if (y !== t) {
+            const a = o.images.splice(y, 1)[0];
+            o.images.splice(t, 0, a), I(), R(), e.downloadSection.style.display === "block" && L();
         }
         return !1;
     }
-    function _(n) {
+    function j(n) {
         this.classList.remove("dragging"), document.querySelectorAll(".image-item, .sort-item").forEach((t)=>{
             t.classList.remove("drag-over");
         });
     }
     let E = null;
-    function z(n) {
-        n.touches.length === 1 && (L = parseInt(this.dataset.index), this.classList.add("dragging"));
+    function _(n) {
+        n.touches.length === 1 && (y = parseInt(this.dataset.index), this.classList.add("dragging"));
     }
-    function V(n) {
-        if (n.touches.length !== 1 || L === null) return;
+    function z(n) {
+        if (n.touches.length !== 1 || y === null) return;
         n.preventDefault();
         const t = n.touches[0];
         this.style.pointerEvents = "none";
         const a = document.elementFromPoint(t.clientX, t.clientY);
         this.style.pointerEvents = "auto";
         const i = a?.closest(".image-item, .sort-item");
-        E && E !== i && E.classList.remove("drag-over"), i && i.dataset.index !== void 0 && parseInt(i.dataset.index) !== L ? (i.classList.add("drag-over"), E = i) : E = null;
+        E && E !== i && E.classList.remove("drag-over"), i && i.dataset.index !== void 0 && parseInt(i.dataset.index) !== y ? (i.classList.add("drag-over"), E = i) : E = null;
     }
-    function Z(n) {
+    function V(n) {
         if (this.classList.remove("dragging"), this.style.pointerEvents = "auto", E) {
             const t = parseInt(E.dataset.index);
-            if (E.classList.remove("drag-over"), L !== null && !isNaN(t) && L !== t) {
-                const a = o.images.splice(L, 1)[0];
-                o.images.splice(t, 0, a), I(), D(), e.downloadSection.style.display === "block" && S();
+            if (E.classList.remove("drag-over"), y !== null && !isNaN(t) && y !== t) {
+                const a = o.images.splice(y, 1)[0];
+                o.images.splice(t, 0, a), I(), R(), e.downloadSection.style.display === "block" && L();
             }
         }
-        E = null, L = null, document.querySelectorAll(".image-item, .sort-item").forEach((t)=>{
+        E = null, y = null, document.querySelectorAll(".image-item, .sort-item").forEach((t)=>{
             t.classList.remove("dragging", "drag-over"), t.style.pointerEvents = "auto";
         });
     }
-    function k(n, t, a, i, r, l) {
+    function B(n, t, a, i, r, l) {
         const f = t.width / t.height, u = r / l;
-        let b, v, m, d;
-        f > u ? (b = r, v = r / f, m = a, d = i + (l - v) / 2) : (v = l, b = l * f, m = a + (r - b) / 2, d = i), n.drawImage(t, 0, 0, t.width, t.height, m, d, b, v);
+        let b, v, m, c;
+        f > u ? (b = r, v = r / f, m = a, c = i + (l - v) / 2) : (v = l, b = l * f, m = a + (r - b) / 2, c = i), n.drawImage(t, 0, 0, t.width, t.height, m, c, b, v);
     }
-    function S() {
+    function L() {
         if (o.images.length < 1) return;
         const n = o.images;
         let t = 0, a = 0;
@@ -326,65 +320,65 @@
         const f = [];
         let u = 0;
         if (l === "horizontal") {
-            const d = o.scaleMode === "fit-first" ? n[0].height : Math.max(...n.map((s)=>s.height));
-            a = d, t = n.reduce((s, c)=>s + c.width * (d / c.height), 0);
+            const c = o.scaleMode === "fit-first" ? n[0].height : Math.max(...n.map((s)=>s.height));
+            a = c, t = n.reduce((s, d)=>s + d.width * (c / d.height), 0);
         } else if (l === "vertical") {
-            const d = o.scaleMode === "fit-first" ? n[0].width : Math.max(...n.map((s)=>s.width));
-            t = d, a = n.reduce((s, c)=>s + c.height * (d / c.width), 0);
+            const c = o.scaleMode === "fit-first" ? n[0].width : Math.max(...n.map((s)=>s.width));
+            t = c, a = n.reduce((s, d)=>s + d.height * (c / d.width), 0);
         } else {
             u = o.scaleMode === "fit-first" ? n[0].width : Math.max(...n.map((s)=>s.width)), t = u * i;
-            const d = Math.ceil(r / i);
-            for(let s = 0; s < d; s++){
-                let c = 0;
+            const c = Math.ceil(r / i);
+            for(let s = 0; s < c; s++){
+                let d = 0;
                 for(let h = 0; h < i; h++){
                     const g = s * i + h;
                     if (g < r) {
                         const p = n[g], w = p.height * (u / p.width);
-                        w > c && (c = w);
+                        w > d && (d = w);
                     }
                 }
-                f.push(c);
+                f.push(d);
             }
-            a = f.reduce((s, c)=>s + c, 0);
+            a = f.reduce((s, d)=>s + d, 0);
         }
         o.baseWidth = t, o.baseHeight = a;
         const b = o.outputScale / 100, v = t * b, m = a * b;
         if (e.canvas.width = v, e.canvas.height = m, e.canvas.style.width = v + "px", e.ctx.fillStyle = o.bgColor, e.ctx.fillRect(0, 0, v, m), e.ctx.save(), e.ctx.scale(b, b), l === "grid") {
-            let d = 0;
+            let c = 0;
             const s = Math.ceil(r / i);
-            for(let c = 0; c < s; c++){
-                const h = f[c];
+            for(let d = 0; d < s; d++){
+                const h = f[d];
                 for(let g = 0; g < i; g++){
-                    const p = c * i + g;
-                    p < r && k(e.ctx, n[p].img, g * u, d, u, h);
+                    const p = d * i + g;
+                    p < r && B(e.ctx, n[p].img, g * u, c, u, h);
                 }
-                d += h;
+                c += h;
             }
         } else {
-            let d = 0;
+            let c = 0;
             n.forEach((s)=>{
-                let c, h, g, p;
-                l === "horizontal" ? (h = a, c = s.width * (a / s.height), g = d, p = 0, d += c) : (c = t, h = s.height * (t / s.width), g = 0, p = d, d += h), k(e.ctx, s.img, g, p, c, h);
+                let d, h, g, p;
+                l === "horizontal" ? (h = a, d = s.width * (a / s.height), g = c, p = 0, c += d) : (d = t, h = s.height * (t / s.width), g = 0, p = c, c += h), B(e.ctx, s.img, g, p, d, h);
             });
         }
         e.ctx.restore(), e.downloadSection.style.display = "block", e.previewInfo.textContent = `即時預覽中... 解析度: ${Math.round(v)} x ${Math.round(m)}`, C();
     }
-    async function te() {
-        console.log("PicMerger v1.0.17 Initializing..."), X(), W(), e.btnShare && (window.Capacitor && window.Capacitor.isNativePlatform() && o.canShare ? (e.btnShare.style.setProperty("display", "block", "important"), e.btnShare.disabled = !1) : e.btnShare.style.setProperty("display", "none", "important")), K(), console.log("Event listeners attached.");
+    async function ee() {
+        console.log("PicMerger v1.0.18 Initializing..."), J(), $(), e.btnShare && (window.Capacitor && window.Capacitor.isNativePlatform() && o.canShare ? (e.btnShare.style.setProperty("display", "block", "important"), e.btnShare.disabled = !1) : e.btnShare.style.setProperty("display", "none", "important")), X(), console.log("Event listeners attached.");
         try {
-            const { default: n, merge_images: t } = await G(async ()=>{
+            const { default: n, merge_images: t } = await F(async ()=>{
                 const { default: a, merge_images: i } = await import("./pic_wasm-C60cSF7V.js");
                 return {
                     default: a,
                     merge_images: i
                 };
             }, [], import.meta.url);
-            await n(), P = t, console.log("WASM engine loaded successfully.");
+            await n(), x = t, console.log("WASM engine loaded successfully.");
         } catch (n) {
             console.warn("WASM 載入跳過 (採用 JS 降級引擎):", n);
         }
     }
-    async function ne() {
+    async function te() {
         if (!(o.images.length < 1)) {
             e.previewInfo.textContent = "正在拼圖中...", e.btnMerge.disabled = !0;
             try {
@@ -394,23 +388,23 @@
                     grid: 2
                 };
                 let t = n[o.direction], a = !1;
-                if (o.direction === "grid" && (o.gridCols === 1 ? t = n.vertical : o.gridCols === o.images.length ? t = n.horizontal : a = !0), a || !P) {
-                    console.info("使用 JS 高品質引擎渲染 (Contain)..."), S();
-                    const p = e.canvas.toDataURL("image/png"), w = await (await fetch(p)).blob(), M = URL.createObjectURL(w);
+                if (o.direction === "grid" && (o.gridCols === 1 ? t = n.vertical : o.gridCols === o.images.length ? t = n.horizontal : a = !0), a || !x) {
+                    console.info("使用 JS 高品質引擎渲染 (Contain)..."), L();
+                    const p = e.canvas.toDataURL("image/png"), w = await (await fetch(p)).blob(), S = URL.createObjectURL(w);
                     e.downloadSection.style.display = "block", e.btnShare && (e.btnShare.disabled = !o.canShare), e.previewInfo.textContent = `處理完成！解析度: ${e.canvas.width}x${e.canvas.height} (完整顯示)`, e.btnMerge.disabled = !1, C();
                     return;
                 }
                 const i = await Promise.all(o.images.map((p)=>fetch(p.src).then((w)=>w.arrayBuffer()))), r = new Uint8Array(i.reduce((p, w)=>p + w.byteLength, 0)), l = new Uint32Array(o.images.length * 2);
                 let f = 0;
                 i.forEach((p, w)=>{
-                    const M = new Uint8Array(p);
-                    r.set(M, f), l[w * 2] = f, l[w * 2 + 1] = f + M.length, f += M.length;
+                    const S = new Uint8Array(p);
+                    r.set(S, f), l[w * 2] = f, l[w * 2 + 1] = f + S.length, f += S.length;
                 });
-                const u = parseInt(o.bgColor.slice(1, 3), 16), b = parseInt(o.bgColor.slice(3, 5), 16), v = parseInt(o.bgColor.slice(5, 7), 16), m = performance.now(), d = P(r, l, t, 1, o.gridCols, u, b, v), s = performance.now(), c = new Blob([
-                    d
+                const u = parseInt(o.bgColor.slice(1, 3), 16), b = parseInt(o.bgColor.slice(3, 5), 16), v = parseInt(o.bgColor.slice(5, 7), 16), m = performance.now(), c = x(r, l, t, 1, o.gridCols, u, b, v), s = performance.now(), d = new Blob([
+                    c
                 ], {
                     type: "image/png"
-                }), h = URL.createObjectURL(c), g = new Image;
+                }), h = URL.createObjectURL(d), g = new Image;
                 g.onload = ()=>{
                     o.baseWidth = g.width, o.baseHeight = g.height, e.canvas.width = g.width, e.canvas.height = g.height, e.ctx.drawImage(g, 0, 0), e.downloadSection.style.display = "block", e.btnShare && (e.btnShare.disabled = !o.canShare), e.previewInfo.textContent = `高品質 Rust 引擎處理完成！解析度: ${g.width}x${g.height} (耗時 ${(s - m).toFixed(0)}ms)`, e.btnMerge.disabled = !1, C();
                 }, g.src = h;
@@ -425,12 +419,12 @@
             const n = e.canvas.toDataURL("image/png", .9);
             if (window.Capacitor && window.Capacitor.isNativePlatform()) {
                 const t = n.split(",")[1], a = `PicMerger_${Date.now()}.png`;
-                await U.writeFile({
+                await k.writeFile({
                     path: `PicMerger/${a}`,
                     data: t,
-                    directory: $.Documents,
+                    directory: U.Documents,
                     recursive: !0
-                }), await J.show({
+                }), await Y.show({
                     text: `儲存成功！路徑：文件/PicMerger/${a}`,
                     duration: "long"
                 }), e.btnSave.textContent = "✅ 已儲存至文件", alert(`儲存成功！
@@ -448,17 +442,17 @@
             }, 3e3);
         }
     }
-    async function ae() {
+    async function ne() {
         try {
             e.btnShare.disabled = !0, e.btnShare.textContent = "正在準備分享...";
             const n = e.canvas.toDataURL("image/png", .9), t = `PicMerger_Share_${Date.now()}.png`;
             if (window.Capacitor && window.Capacitor.isNativePlatform()) {
-                const a = n.split(",")[1], i = await U.writeFile({
+                const a = n.split(",")[1], i = await k.writeFile({
                     path: t,
                     data: a,
-                    directory: $.Cache
+                    directory: U.Cache
                 });
-                await Y.share({
+                await G.share({
                     title: "分享合併圖片",
                     url: i.uri,
                     dialogTitle: "分享圖片至..."
@@ -472,8 +466,8 @@
             }, 3e3);
         }
     }
-    function oe() {
-        o.images.forEach((n)=>URL.revokeObjectURL(n.src)), o.images = [], I(), y(!1), e.ctx.clearRect(0, 0, e.canvas.width, e.canvas.height), e.previewInfo.textContent = "請上傳圖片以開始", e.downloadSection.style.display = "none", e.fileInput.value = "";
+    function ae() {
+        o.images.forEach((n)=>URL.revokeObjectURL(n.src)), o.images = [], I(), e.ctx.clearRect(0, 0, e.canvas.width, e.canvas.height), e.previewInfo.textContent = "請上傳圖片以開始", e.downloadSection.style.display = "none", e.fileInput.value = "";
     }
     window.addEventListener("dragover", (n)=>n.preventDefault(), !1);
     window.addEventListener("drop", (n)=>n.preventDefault(), !1);
@@ -482,5 +476,5 @@
             navigator.serviceWorker.register("sw.js").catch((n)=>console.warn("SW register failed (ignored)"));
         } catch  {}
     });
-    te();
+    ee();
 })();
