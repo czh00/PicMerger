@@ -243,9 +243,31 @@ class PicViewModel : ViewModel() {
         } else {
             val bitmaps = images.mapNotNull { it.cachedBitmap ?: ImageProcessor.loadBitmap(context, it) }
             if (bitmaps.isEmpty()) return 0 to 0
-            val maxWidth = bitmaps.maxOf { it.width }
-            val maxHeight = bitmaps.maxOf { it.height }
-            return (maxWidth * cols) to (maxHeight * rows)
+            
+            return if (direction == MergeDirection.GRID) {
+                val maxW = bitmaps.maxOf { it.width }
+                val cellW = maxW
+                var totalH = 0
+                val rowCount = kotlin.math.ceil(images.size.toDouble() / cols).toInt()
+                for (r in 0 until rowCount) {
+                    var rowMaxH = 0
+                    for (c in 0 until cols) {
+                        val index = r * cols + c
+                        if (index < bitmaps.size) {
+                            val bitmap = bitmaps[index]
+                            val scale = cellW.toFloat() / bitmap.width
+                            val h = (bitmap.height * scale).toInt()
+                            if (h > rowMaxH) rowMaxH = h
+                        }
+                    }
+                    totalH += rowMaxH
+                }
+                (maxW * cols) to totalH
+            } else if (direction == MergeDirection.HORIZONTAL) {
+                bitmaps.sumOf { it.width } to bitmaps.maxOf { it.height }
+            } else {
+                bitmaps.maxOf { it.width } to bitmaps.sumOf { it.height }
+            }
         }
     }
 

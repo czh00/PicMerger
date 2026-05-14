@@ -36,42 +36,41 @@ object ImageProcessor {
         // 1. Calculate Base Dimensions (Unscaled)
         var canvasWidth = 0
         var canvasHeight = 0
+        val rowHeights = mutableListOf<Int>()
+        val cols = max(1, gridCols)
 
         when (direction) {
             MergeDirection.HORIZONTAL -> {
-                if (scaleMode == ScaleMode.FIT_FIRST) {
-                    val baseH = bitmaps[0].height
-                    canvasHeight = baseH
-                    bitmaps.forEach { 
-                        canvasWidth += (it.width * (baseH.toFloat() / it.height)).toInt()
-                    }
-                } else {
-                    canvasHeight = bitmaps.maxOf { it.height }
-                    canvasWidth = bitmaps.sumOf { it.width }
-                }
+                canvasHeight = bitmaps.maxOf { it.height }
+                canvasWidth = bitmaps.sumOf { it.width }
             }
             MergeDirection.VERTICAL -> {
-                if (scaleMode == ScaleMode.FIT_FIRST) {
-                    val baseW = bitmaps[0].width
-                    canvasWidth = baseW
-                    bitmaps.forEach {
-                        canvasHeight += (it.height * (baseW.toFloat() / it.width)).toInt()
-                    }
-                } else {
-                    canvasWidth = bitmaps.maxOf { it.width }
-                    canvasHeight = bitmaps.sumOf { it.height }
-                }
+                canvasWidth = bitmaps.maxOf { it.width }
+                canvasHeight = bitmaps.sumOf { it.height }
             }
             MergeDirection.GRID -> {
-                val cols = max(1, gridCols)
-                val rows = ceil(bitmaps.size.toFloat() / cols).toInt()
-                if (scaleMode == ScaleMode.FIT_FIRST) {
-                    canvasWidth = bitmaps[0].width * cols
-                    canvasHeight = bitmaps[0].height * rows
-                } else {
-                    canvasWidth = bitmaps.maxOf { it.width } * cols
-                    canvasHeight = bitmaps.maxOf { it.height } * rows
+                // 以最大寬度的圖片作為單元格寬度的基準，避免極端變形
+                val maxW = bitmaps.maxOf { it.width }
+                canvasWidth = maxW * cols
+                val cellW = maxW
+                
+                // 計算每一行的動態高度 (不裁切、不變形)
+                val rowCount = ceil(bitmaps.size.toFloat() / cols).toInt()
+                for (r in 0 until rowCount) {
+                    var rowMaxH = 0
+                    for (c in 0 until cols) {
+                        val index = r * cols + c
+                        if (index < bitmaps.size) {
+                            val bitmap = bitmaps[index]
+                            // 在固定寬度下，為了維持比例所需的縮放高度
+                            val scale = cellW.toFloat() / bitmap.width
+                            val h = (bitmap.height * scale).toInt()
+                            if (h > rowMaxH) rowMaxH = h
+                        }
+                    }
+                    rowHeights.add(rowMaxH)
                 }
+                canvasHeight = rowHeights.sum()
             }
         }
 
@@ -98,40 +97,23 @@ object ImageProcessor {
         val paint = Paint(Paint.FILTER_BITMAP_FLAG)
 
         if (direction == MergeDirection.GRID) {
-            val cols = max(1, gridCols)
-            val rows = ceil(bitmaps.size.toFloat() / cols).toInt()
             val cellW = canvasWidth / cols
-            val cellH = if (rows > 0) canvasHeight / rows else canvasHeight
-
-            bitmaps.forEachIndexed { index, bitmap ->
-                val r = index / cols
-                val c = index % cols
-                
-                val scaleW = cellW.toFloat() / bitmap.width
-                val scaleH = cellH.toFloat() / bitmap.height
-                val fitScale = Math.min(scaleW, scaleH)
-                
-                val drawW = (bitmap.width * fitScale).toInt()
-                val drawH = (bitmap.height * fitScale).toInt()
-
-                var x = (c * cellW).toFloat()
-                var y = (r * cellH).toFloat()
-
-                when (alignment) {
-                    Alignment.CENTER -> {
-                        x += (cellW - drawW) / 2f
-                        y += (cellH - drawH) / 2f
+            var currentY = 0f
+            
+            for (r in 0 until rowHeights.size) {
+                val rowH = rowHeights[r].toFloat()
+                for (c in 0 until cols) {
+                    val index = r * cols + c
+                    if (index < bitmaps.size) {
+                        val bitmap = bitmaps[index]
+                        val x = (c * cellW).toFloat()
+                        val y = currentY
+                        
+                        // 執行 Contain 縮放繪製
+                        drawImageContain(canvas, bitmap, x, y, cellW.toFloat(), rowH, paint)
                     }
-                    Alignment.END -> {
-                        x += (cellW - drawW).toFloat()
-                        y += (cellH - drawH).toFloat()
-                    }
-                    else -> {}
                 }
-                
-                val src = android.graphics.Rect(0, 0, bitmap.width, bitmap.height)
-                val dst = android.graphics.RectF(x, y, x + drawW, y + drawH)
-                canvas.drawBitmap(bitmap, src, dst, paint)
+                currentY += rowH
             }
         } else {
             var offset = 0f
@@ -142,30 +124,12 @@ object ImageProcessor {
                 var y = 0f
 
                 if (direction == MergeDirection.HORIZONTAL) {
-                    if (scaleMode == ScaleMode.FIT_FIRST) {
-                        val scale = canvasHeight.toFloat() / bitmap.height
-                        drawW *= scale
-                        drawH *= scale
-                    }
                     x = offset
-                    when (alignment) {
-                        Alignment.CENTER -> y = (canvasHeight - drawH) / 2f
-                        Alignment.END -> y = canvasHeight - drawH.toFloat()
-                        else -> {}
-                    }
+                    y = (canvasHeight - drawH) / 2f
                     offset += drawW
                 } else {
-                    if (scaleMode == ScaleMode.FIT_FIRST) {
-                        val scale = canvasWidth.toFloat() / bitmap.width
-                        drawW *= scale
-                        drawH *= scale
-                    }
                     y = offset
-                    when (alignment) {
-                        Alignment.CENTER -> x = (canvasWidth - drawW) / 2f
-                        Alignment.END -> x = canvasWidth - drawW.toFloat()
-                        else -> {}
-                    }
+                    x = (canvasWidth - drawW) / 2f
                     offset += drawH
                 }
                 
@@ -176,6 +140,31 @@ object ImageProcessor {
         }
 
         return result
+    }
+
+    private fun drawImageContain(canvas: Canvas, bitmap: Bitmap, x: Float, y: Float, w: Float, h: Float, paint: Paint) {
+        val imgRatio = bitmap.width.toFloat() / bitmap.height
+        val cellRatio = w / h
+        val drawW: Float
+        val drawH: Float
+        val drawX: Float
+        val drawY: Float
+
+        if (imgRatio > cellRatio) {
+            drawW = w
+            drawH = w / imgRatio
+            drawX = x
+            drawY = y + (h - drawH) / 2f
+        } else {
+            drawH = h
+            drawW = h * imgRatio
+            drawX = x + (w - drawW) / 2f
+            drawY = y
+        }
+        
+        val src = android.graphics.Rect(0, 0, bitmap.width, bitmap.height)
+        val dst = android.graphics.RectF(drawX, drawY, drawX + drawW, drawY + drawH)
+        canvas.drawBitmap(bitmap, src, dst, paint)
     }
 
     /**

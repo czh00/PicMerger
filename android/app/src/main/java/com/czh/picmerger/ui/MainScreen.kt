@@ -289,37 +289,11 @@ fun SettingsPanel(viewModel: PicViewModel) {
                 )
             }
 
-            // Disable advanced settings for videos since VideoProcessor auto scales to minimum size
+            // Disable advanced settings for videos
             val enableAdvanced = !viewModel.isMediaTypeVideo
             if (viewModel.isMediaTypeVideo) {
-                Text("⚠️ 影片模式對齊功能不支援 (使用自動填滿)", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
+                Text("⚠️ 影片模式不支援進階設定", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
             }
-
-            // Alignment
-            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 4.dp)) {
-                Text("對齊: ", style = MaterialTheme.typography.labelMedium, color = if(enableAdvanced) Color.Unspecified else Color.Gray)
-                SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
-                    com.czh.picmerger.model.Alignment.values().forEachIndexed { index, align ->
-                        SegmentedButton(
-                            selected = viewModel.alignment == align,
-                            enabled = enableAdvanced,
-                            onClick = { 
-                                viewModel.alignment = align
-                                viewModel.autoPreview(context)
-                            },
-                            shape = SegmentedButtonDefaults.itemShape(index = index, count = com.czh.picmerger.model.Alignment.values().size)
-                        ) {
-                            Text(when(align) {
-                                com.czh.picmerger.model.Alignment.START -> "起點"
-                                com.czh.picmerger.model.Alignment.CENTER -> "置中"
-                                com.czh.picmerger.model.Alignment.END -> "終點"
-                            }, fontSize = 12.sp)
-                        }
-                    }
-                }
-            }
-
-
 
             // Output Mode
             Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 4.dp)) {
