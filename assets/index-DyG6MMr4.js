@@ -20,9 +20,9 @@
             fetch(s.href, l);
         }
     })();
-    const z = "modulepreload", V = function(n, t) {
+    const V = "modulepreload", Z = function(n, t) {
         return new URL(n, t).href;
-    }, R = {}, Z = function(t, a, i) {
+    }, R = {}, q = function(t, a, i) {
         let s = Promise.resolve();
         if (a && a.length > 0) {
             let g = function(r) {
@@ -36,7 +36,7 @@
             };
             const u = document.getElementsByTagName("link"), f = document.querySelector("meta[property=csp-nonce]"), c = f?.nonce || f?.getAttribute("nonce");
             s = g(a.map((r)=>{
-                if (r = V(r, i), r in R) return;
+                if (r = Z(r, i), r in R) return;
                 R[r] = !0;
                 const d = r.endsWith(".css"), m = d ? '[rel="stylesheet"]' : "";
                 if (!!i) for(let h = u.length - 1; h >= 0; h--){
@@ -45,7 +45,7 @@
                 }
                 else if (document.querySelector(`link[href="${r}"]${m}`)) return;
                 const p = document.createElement("link");
-                if (p.rel = d ? "stylesheet" : z, d || (p.as = "script"), p.crossOrigin = "", p.href = r, c && p.setAttribute("nonce", c), document.head.appendChild(p), d) return new Promise((h, b)=>{
+                if (p.rel = d ? "stylesheet" : V, d || (p.as = "script"), p.crossOrigin = "", p.href = r, c && p.setAttribute("nonce", c), document.head.appendChild(p), d) return new Promise((h, b)=>{
                     p.addEventListener("load", h), p.addEventListener("error", ()=>b(new Error(`Unable to preload CSS for ${r}`)));
                 });
             }));
@@ -63,8 +63,8 @@
     };
     console.log("DEBUG: main.js loading...");
     window.handleFiles = P;
-    let B, T, q, F;
-    async function G() {}
+    let T, k, F, G;
+    async function J() {}
     let x = null;
     const o = {
         images: [],
@@ -80,7 +80,7 @@
         canShare: !!navigator.share
     };
     let e = {};
-    function k() {
+    function U() {
         e = {
             dropZone: document.getElementById("main-drop-zone"),
             fileInput: document.getElementById("main-file-input"),
@@ -107,7 +107,7 @@
             btnApplySort: document.getElementById("btn-apply-sort")
         }, console.log("Elements initialized:", Object.keys(e).filter((n)=>e[n]));
     }
-    function J() {
+    function X() {
         document.addEventListener("click", (t)=>{
             if (e.fileInput && t.target === e.fileInput) return;
             t.target.closest("#main-drop-zone") && e.fileInput && (console.log("Global Click Delegate Triggered"), e.fileInput.click());
@@ -152,7 +152,7 @@
                 }
             }, 100));
         }), e.btnReset && e.btnReset.addEventListener("click", ae), e.btnSave && e.btnSave.addEventListener("click", te), e.btnShare && e.btnShare.addEventListener("click", ne), e.canvasWrapper && e.canvasWrapper.addEventListener("click", ()=>{
-            o.images.length > 0 && Y();
+            o.images.length > 0 && K();
         }), e.btnCloseModal && e.btnCloseModal.addEventListener("click", M), e.sortModal && e.sortModal.addEventListener("click", (t)=>{
             t.target === e.sortModal && M();
         }), e.btnApplySort && e.btnApplySort.addEventListener("click", ()=>{
@@ -161,7 +161,7 @@
     }
     async function P(n) {
         if (console.log("Handling files:", n ? n.length : 0), !n || n.length === 0) return;
-        (!e || !e.imageList) && (console.log("Lazy-initializing elements..."), k()), e.previewInfo && (e.previewInfo.textContent = "正在處理並修正圖片方向...");
+        (!e || !e.imageList) && (console.log("Lazy-initializing elements..."), U()), e.previewInfo && (e.previewInfo.textContent = "正在處理並修正圖片方向...");
         const t = [];
         for (const a of Array.from(n))if (a.type.startsWith("image/") || /\.(jpg|jpeg|png|webp|gif|bmp)$/i.test(a.name)) try {
             const s = await new Promise((l, g)=>{
@@ -203,16 +203,16 @@
             <button class="btn-remove" title="移除圖片">✕</button>
         `, a.querySelector(".btn-remove").addEventListener("click", (i)=>{
                 i.stopPropagation(), URL.revokeObjectURL(o.images[t].src), o.images.splice(t, 1), I(), e.downloadSection.style.display = "none";
-            }), a.addEventListener("dragstart", U), a.addEventListener("dragover", $), a.addEventListener("drop", H), a.addEventListener("dragend", N), a.addEventListener("dragenter", W), a.addEventListener("dragleave", A), a.addEventListener("touchstart", O, {
+            }), a.addEventListener("dragstart", $), a.addEventListener("dragover", W), a.addEventListener("drop", N), a.addEventListener("dragend", O), a.addEventListener("dragenter", A), a.addEventListener("dragleave", H), a.addEventListener("touchstart", j, {
                 passive: !1
-            }), a.addEventListener("touchmove", j, {
+            }), a.addEventListener("touchmove", _, {
                 passive: !1
-            }), a.addEventListener("touchend", _, {
+            }), a.addEventListener("touchend", z, {
                 passive: !1
             }), e.imageList.appendChild(a);
-        }), e.btnMerge.disabled = o.images.length < 2, X();
+        }), e.btnMerge.disabled = o.images.length < 2, Y();
     }
-    function X() {
+    function Y() {
         if (e.gridColsInput) {
             const n = o.images.length || 1;
             e.gridColsInput.max = n, o.gridCols > n && (o.gridCols = n), e.gridColsInput.value = o.gridCols;
@@ -227,7 +227,7 @@
         const a = o.outputScale / 100, i = Math.round(o.baseWidth * a), s = Math.round(o.baseHeight * a);
         o.outputMode === "scale" ? (e.outputValueInput.max = 100, t = Math.round(o.outputScale), n && (n.innerHTML = `${t}% <small>(${i} x ${s})</small>`)) : o.outputMode === "width" ? (e.outputValueInput.max = o.baseWidth * 2, t = i, n && (n.innerHTML = `${t}px <small>(高: ${s}px)</small>`)) : o.outputMode === "height" && (e.outputValueInput.max = o.baseHeight * 2, t = s, n && (n.innerHTML = `${t}px <small>(寬: ${i}px)</small>`)), e.outputValueInput.value = t;
     }
-    function Y() {
+    function K() {
         D(), e.sortModal.classList.add("show"), document.body.style.overflow = "hidden";
     }
     function M() {
@@ -239,29 +239,29 @@
             a.className = "sort-item", a.draggable = !0, a.dataset.index = t, a.innerHTML = `
             <img src="${n.src}" alt="Thumb" />
             <div class="info">${n.name}</div>
-        `, a.addEventListener("dragstart", U), a.addEventListener("dragover", $), a.addEventListener("drop", H), a.addEventListener("dragend", N), a.addEventListener("dragenter", W), a.addEventListener("dragleave", A), a.addEventListener("touchstart", O, {
+        `, a.addEventListener("dragstart", $), a.addEventListener("dragover", W), a.addEventListener("drop", N), a.addEventListener("dragend", O), a.addEventListener("dragenter", A), a.addEventListener("dragleave", H), a.addEventListener("touchstart", j, {
                 passive: !1
-            }), a.addEventListener("touchmove", j, {
+            }), a.addEventListener("touchmove", _, {
                 passive: !1
-            }), a.addEventListener("touchend", _, {
+            }), a.addEventListener("touchend", z, {
                 passive: !1
             }), e.sortList.appendChild(a);
         });
     }
     let w = null;
-    function U(n) {
+    function $(n) {
         w = parseInt(this.dataset.index), this.classList.add("dragging"), n.dataTransfer.effectAllowed = "move", n.dataTransfer.setData("text/plain", w);
     }
-    function $(n) {
+    function W(n) {
         return n.preventDefault && n.preventDefault(), n.dataTransfer.dropEffect = "move", !1;
     }
-    function W(n) {
+    function A(n) {
         this.classList.add("drag-over");
     }
-    function A(n) {
+    function H(n) {
         this.classList.remove("drag-over");
     }
-    function H(n) {
+    function N(n) {
         n.stopPropagation && n.stopPropagation();
         const t = parseInt(this.dataset.index);
         if (w !== t) {
@@ -270,16 +270,16 @@
         }
         return !1;
     }
-    function N(n) {
+    function O(n) {
         this.classList.remove("dragging"), document.querySelectorAll(".image-item, .sort-item").forEach((t)=>{
             t.classList.remove("drag-over");
         });
     }
     let y = null;
-    function O(n) {
+    function j(n) {
         n.touches.length === 1 && (w = parseInt(this.dataset.index), this.classList.add("dragging"));
     }
-    function j(n) {
+    function _(n) {
         if (n.touches.length !== 1 || w === null) return;
         n.preventDefault();
         const t = n.touches[0];
@@ -289,7 +289,7 @@
         const i = a?.closest(".image-item, .sort-item");
         y && y !== i && y.classList.remove("drag-over"), i && i.dataset.index !== void 0 && parseInt(i.dataset.index) !== w ? (i.classList.add("drag-over"), y = i) : y = null;
     }
-    function _(n) {
+    function z(n) {
         if (this.classList.remove("dragging"), this.style.pointerEvents = "auto", y) {
             const t = parseInt(y.dataset.index);
             if (y.classList.remove("drag-over"), w !== null && !isNaN(t) && w !== t) {
@@ -301,7 +301,7 @@
             t.classList.remove("dragging", "drag-over"), t.style.pointerEvents = "auto";
         });
     }
-    function K(n, t, a, i, s, l) {
+    function B(n, t, a, i, s, l) {
         const g = t.width / t.height, u = s / l;
         let f, c, r, d;
         g > u ? (f = s, c = s / g, r = a, d = i + (l - c) / 2) : (c = l, f = l * g, r = a + (s - f) / 2, d = i), n.drawImage(t, 0, 0, t.width, t.height, r, d, f, c);
@@ -328,21 +328,21 @@
             const c = Math.ceil(s / i), r = t / i, d = a / c;
             n.forEach((m, v)=>{
                 const p = Math.floor(v / i), h = v % i;
-                K(e.ctx, m.img, h * r, p * d, r, d);
+                B(e.ctx, m.img, h * r, p * d, r, d);
             });
         } else {
             let c = 0;
             n.forEach((r)=>{
                 let d, m, v, p;
-                l === "horizontal" ? (m = a, d = r.width * (a / r.height), v = c, p = 0, c += d) : (d = t, m = r.height * (t / r.width), v = 0, p = c, c += m), e.ctx.drawImage(r.img, v, p, d, m);
+                l === "horizontal" ? (m = a, d = r.width * (a / r.height), v = c, p = 0, c += d) : (d = t, m = r.height * (t / r.width), v = 0, p = c, c += m), B(e.ctx, r.img, v, p, d, m);
             });
         }
         e.ctx.restore(), e.downloadSection.style.display = "block", e.previewInfo.textContent = `即時預覽中... 解析度: ${Math.round(u)} x ${Math.round(f)}`, C();
     }
     async function Q() {
-        console.log("PicMerger v1.0.13 Initializing..."), G(), k(), e.btnShare && (window.Capacitor && window.Capacitor.isNativePlatform() && o.canShare ? (e.btnShare.style.setProperty("display", "block", "important"), e.btnShare.disabled = !1) : e.btnShare.style.setProperty("display", "none", "important")), J(), console.log("Event listeners attached.");
+        console.log("PicMerger v1.0.14 Initializing..."), J(), U(), e.btnShare && (window.Capacitor && window.Capacitor.isNativePlatform() && o.canShare ? (e.btnShare.style.setProperty("display", "block", "important"), e.btnShare.disabled = !1) : e.btnShare.style.setProperty("display", "none", "important")), X(), console.log("Event listeners attached.");
         try {
-            const { default: n, merge_images: t } = await Z(async ()=>{
+            const { default: n, merge_images: t } = await q(async ()=>{
                 const { default: a, merge_images: i } = await import("./pic_wasm-C60cSF7V.js");
                 return {
                     default: a,
@@ -365,9 +365,9 @@
                 };
                 let t = n[o.direction], a = !1;
                 if (o.direction === "grid" && (o.gridCols === 1 ? t = n.vertical : o.gridCols === o.images.length ? t = n.horizontal : a = !0), a || !x) {
-                    console.info("使用 JS 引擎渲染以保證比例鎖定..."), L();
+                    console.info("使用 JS 高品質引擎渲染 (Contain)..."), L();
                     const b = e.canvas.toDataURL("image/png"), E = await (await fetch(b)).blob(), S = URL.createObjectURL(E);
-                    e.downloadSection.style.display = "block", e.btnShare && (e.btnShare.disabled = !o.canShare), e.previewInfo.textContent = `處理完成！解析度: ${e.canvas.width}x${e.canvas.height} (比例鎖定)`, e.btnMerge.disabled = !1, C();
+                    e.downloadSection.style.display = "block", e.btnShare && (e.btnShare.disabled = !o.canShare), e.previewInfo.textContent = `處理完成！解析度: ${e.canvas.width}x${e.canvas.height} (完整顯示)`, e.btnMerge.disabled = !1, C();
                     return;
                 }
                 const i = await Promise.all(o.images.map((b)=>fetch(b.src).then((E)=>E.arrayBuffer()))), s = new Uint8Array(i.reduce((b, E)=>b + E.byteLength, 0)), l = new Uint32Array(o.images.length * 2);
@@ -395,12 +395,12 @@
             const n = e.canvas.toDataURL("image/png", .9);
             if (window.Capacitor && window.Capacitor.isNativePlatform()) {
                 const t = n.split(",")[1], a = `PicMerger_${Date.now()}.png`;
-                await B.writeFile({
+                await T.writeFile({
                     path: `PicMerger/${a}`,
                     data: t,
-                    directory: T.Documents,
+                    directory: k.Documents,
                     recursive: !0
-                }), await F.show({
+                }), await G.show({
                     text: `儲存成功！路徑：文件/PicMerger/${a}`,
                     duration: "long"
                 }), e.btnSave.textContent = "✅ 已儲存至文件", alert(`儲存成功！
@@ -423,12 +423,12 @@
             e.btnShare.disabled = !0, e.btnShare.textContent = "正在準備分享...";
             const n = e.canvas.toDataURL("image/png", .9), t = `PicMerger_Share_${Date.now()}.png`;
             if (window.Capacitor && window.Capacitor.isNativePlatform()) {
-                const a = n.split(",")[1], i = await B.writeFile({
+                const a = n.split(",")[1], i = await T.writeFile({
                     path: t,
                     data: a,
-                    directory: T.Cache
+                    directory: k.Cache
                 });
-                await q.share({
+                await F.share({
                     title: "分享合併圖片",
                     url: i.uri,
                     dialogTitle: "分享圖片至..."
