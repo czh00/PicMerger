@@ -83,7 +83,7 @@ fun MainScreen(viewModel: PicViewModel = viewModel()) {
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text("圖片合併", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
-                Text("v1.0.27", fontSize = 12.sp, color = MaterialTheme.colorScheme.outline)
+                Text("v1.0.28", fontSize = 12.sp, color = MaterialTheme.colorScheme.outline)
             }
 
             ImageSelectorArea(viewModel, onAddClick = {
@@ -163,122 +163,124 @@ fun ImageSelectorArea(viewModel: PicViewModel, onAddClick: () -> Unit) {
                 }
             } else {
                 var draggedUri by remember { mutableStateOf<Uri?>(null) }
-                var dragOffset by remember { mutableStateOf(Offset.Zero) }
+                var fingerOffset by remember { mutableStateOf(Offset.Zero) }
+                var itemSizePx by remember { mutableStateOf(0f) }
+                var gridWidthPx by remember { mutableStateOf(0f) }
 
                 // 使用 LazyVerticalGrid 實現換行 + 排序
-                LazyVerticalGrid(
-                    columns = GridCells.Adaptive(72.dp),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .heightIn(max = 400.dp)
-                        .padding(top = 8.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                    contentPadding = PaddingValues(4.dp)
-                ) {
-                    itemsIndexed(viewModel.images, key = { _, mItem -> mItem.uri }) { index, mItem ->
-                        val isDragged = mItem.uri == draggedUri
-                        val itemModifier = if (isDragged) {
-                            Modifier
-                                .zIndex(10f) // 確保拖移中的項目在最上層
-                                .graphicsLayer {
-                                    translationX = dragOffset.x
-                                    translationY = dragOffset.y
-                                    scaleX = 1.2f
-                                    scaleY = 1.2f
-                                    shadowElevation = 12.dp.toPx()
-                                }
-                        } else {
-                            Modifier.zIndex(1f)
-                        }
+                // 將 pointerInput 提升到容器層級，確保座標系絕對穩定
+                BoxWithConstraints(modifier = Modifier.fillMaxWidth().padding(top = 8.dp)) {
+                    gridWidthPx = with(density) { maxWidth.toPx() }
+                    val minItemWidth = 72.dp
+                    val spacing = 8.dp
+                    val columns = (maxWidth / (minItemWidth + spacing)).toInt().coerceAtLeast(1)
+                    val cellSize = maxWidth / columns
+                    itemSizePx = with(density) { cellSize.toPx() }
 
-                        Box(
-                            modifier = itemModifier
-                                .size(72.dp)
-                                .pointerInput(mItem.uri) {
-                                    detectDragGesturesAfterLongPress(
-                                        onDragStart = { 
-                                            draggedUri = mItem.uri
-                                            dragOffset = Offset.Zero
-                                        },
-                                        onDrag = { change, dragAmount ->
-                                            change.consume()
-                                            dragOffset += dragAmount
+                    LazyVerticalGrid(
+                        columns = GridCells.Fixed(columns),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .heightIn(max = 400.dp)
+                            .pointerInput(Unit) {
+                                detectDragGesturesAfterLongPress(
+                                    onDragStart = { offset ->
+                                        // 1. 根據手指按下的絕對位置，換算出對應的索引
+                                        val col = (offset.x / itemSizePx).toInt()
+                                        val row = (offset.y / itemSizePx).toInt()
+                                        val index = (row * columns + col)
+                                        if (index in viewModel.images.indices) {
+                                            draggedUri = viewModel.images[index].uri
+                                            fingerOffset = offset
+                                        }
+                                    },
+                                    onDrag = { change, dragAmount ->
+                                        change.consume()
+                                        fingerOffset += dragAmount
+                                        
+                                        val currentIdx = viewModel.images.indexOfFirst { it.uri == draggedUri }
+                                        if (currentIdx != -1) {
+                                            // 2. 根據手指當前的絕對位置，計算目標位置
+                                            val targetCol = (fingerOffset.x / itemSizePx).toInt().coerceIn(0, columns - 1)
+                                            val targetRow = (fingerOffset.y / itemSizePx).toInt()
+                                            val targetIdx = (targetRow * columns + targetCol).coerceIn(0, viewModel.images.size - 1)
                                             
-                                            val currentIdx = viewModel.images.indexOfFirst { it.uri == draggedUri }
-                                            if (currentIdx != -1) {
-                                                // 精確計算：使用實際容器寬度與自適應列數
-                                                val minItemWidthPx = with(density) { 72.dp.toPx() }
-                                                val spacingPx = with(density) { 8.dp.toPx() }
-                                                
-                                                // 計算網格實際上分成了幾列 (Adaptive 邏輯)
-                                                val columns = (size.width / (minItemWidthPx + spacingPx)).toInt().coerceAtLeast(1)
-                                                // 計算每一格的精確寬度與高度（含間距）
-                                                val preciseCellWidth = size.width / columns
-                                                val preciseCellHeight = preciseCellWidth // 網格通常寬高比一致
-                                                
-                                                val offsetX = (dragOffset.x / preciseCellWidth).toInt()
-                                                val offsetY = (dragOffset.y / preciseCellHeight).toInt()
-                                                
-                                                if (offsetX != 0 || offsetY != 0) {
-                                                    val targetIdx = (currentIdx + offsetY * columns + offsetX)
-                                                        .coerceIn(0, viewModel.images.size - 1)
-                                                    
-                                                    if (targetIdx != currentIdx) {
-                                                        val fromRow = currentIdx / columns
-                                                        val fromCol = currentIdx % columns
-                                                        val toRow = targetIdx / columns
-                                                        val toCol = targetIdx % columns
-                                                        
-                                                        // 使用精確的格線距離進行座標補償
-                                                        val diffX = (toCol - fromCol) * preciseCellWidth
-                                                        val diffY = (toRow - fromRow) * preciseCellHeight
-                                                        
-                                                        viewModel.moveMedia(context, currentIdx, targetIdx)
-                                                        dragOffset = Offset(dragOffset.x - diffX, dragOffset.y - diffY)
-                                                    }
-                                                }
+                                            if (targetIdx != currentIdx) {
+                                                viewModel.moveMedia(context, currentIdx, targetIdx)
                                             }
-                                        },
-                                        onDragEnd = { draggedUri = null; dragOffset = Offset.Zero },
-                                        onDragCancel = { draggedUri = null; dragOffset = Offset.Zero }
+                                        }
+                                    },
+                                    onDragEnd = { draggedUri = null },
+                                    onDragCancel = { draggedUri = null }
+                                )
+                            },
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                        contentPadding = PaddingValues(4.dp)
+                    ) {
+                        itemsIndexed(viewModel.images, key = { _, mItem -> mItem.uri }) { index, mItem ->
+                            val isDragged = mItem.uri == draggedUri
+                            
+                            // 計算這張圖片在網格中的預定位置
+                            val row = index / columns
+                            val col = index % columns
+                            val baseLeft = col * itemSizePx
+                            val baseTop = row * itemSizePx
+
+                            val itemModifier = if (isDragged) {
+                                Modifier
+                                    .zIndex(10f)
+                                    .graphicsLayer {
+                                        // 絕對座標偏移：手指當前位置 - 圖片原本位置 - (圖片大小/2 以對齊中心)
+                                        translationX = fingerOffset.x - baseLeft - (itemSizePx / 2)
+                                        translationY = fingerOffset.y - baseTop - (itemSizePx / 2)
+                                        scaleX = 1.2f
+                                        scaleY = 1.2f
+                                        shadowElevation = 12.dp.toPx()
+                                    }
+                            } else {
+                                Modifier.zIndex(1f)
+                            }
+
+                            Box(
+                                modifier = itemModifier
+                                    .size(72.dp)
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .background(MaterialTheme.colorScheme.surfaceVariant)
+                            ) {
+                                AsyncImage(
+                                    model = mItem.uri,
+                                    contentDescription = null,
+                                    modifier = Modifier.fillMaxSize(),
+                                    contentScale = ContentScale.Crop
+                                )
+
+                                // 移除按鈕
+                                Surface(
+                                    onClick = { viewModel.removeMedia(context, mItem) },
+                                    modifier = Modifier
+                                        .align(Alignment.TopEnd)
+                                        .size(20.dp)
+                                        .padding(2.dp),
+                                    shape = CircleShape,
+                                    color = Color.Black.copy(alpha = 0.5f)
+                                ) {
+                                    Icon(
+                                        Icons.Default.Close,
+                                        contentDescription = "Remove",
+                                        tint = Color.White,
+                                        modifier = Modifier.padding(2.dp)
                                     )
                                 }
-                                .clip(RoundedCornerShape(8.dp))
-                                .background(MaterialTheme.colorScheme.surfaceVariant)
-                        ) {
-                            AsyncImage(
-                                model = mItem.uri,
-                                contentDescription = null,
-                                modifier = Modifier.fillMaxSize(),
-                                contentScale = ContentScale.Crop
-                            )
-
-                            // 移除按鈕
-                            Surface(
-                                onClick = { viewModel.removeMedia(context, mItem) },
-                                modifier = Modifier
-                                    .align(Alignment.TopEnd)
-                                    .size(20.dp)
-                                    .padding(2.dp),
-                                shape = CircleShape,
-                                color = Color.Black.copy(alpha = 0.5f)
-                            ) {
-                                Icon(
-                                    Icons.Default.Close,
-                                    contentDescription = "Remove",
-                                    tint = Color.White,
-                                    modifier = Modifier.padding(2.dp)
-                                )
-                            }
-                            
-                            if (mItem.isVideo) {
-                                Icon(
-                                    Icons.Default.PlayCircle,
-                                    contentDescription = null,
-                                    modifier = Modifier.align(Alignment.BottomStart).size(16.dp).padding(2.dp),
-                                    tint = Color.White
-                                )
+                                
+                                if (mItem.isVideo) {
+                                    Icon(
+                                        Icons.Default.PlayCircle,
+                                        contentDescription = null,
+                                        modifier = Modifier.align(Alignment.BottomStart).size(16.dp).padding(2.dp),
+                                        tint = Color.White
+                                    )
+                                }
                             }
                         }
                     }
