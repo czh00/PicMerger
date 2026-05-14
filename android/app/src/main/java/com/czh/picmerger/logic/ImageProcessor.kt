@@ -49,26 +49,33 @@ object ImageProcessor {
                 canvasHeight = bitmaps.sumOf { it.height }
             }
             MergeDirection.GRID -> {
-                // 以最大寬度的圖片作為單元格寬度的基準，避免極端變形
+                // 1.1 設定基準寬度：以最大圖片寬度為準
                 val maxW = bitmaps.maxOf { it.width }
                 canvasWidth = maxW * cols
-                val cellW = maxW
+                val targetCanvasWidth = canvasWidth.toFloat()
                 
-                // 計算每一行的動態高度 (不裁切、不變形)
+                // 1.2 動態行高算法：確保每一行圖片都能無縫填充寬度
                 val rowCount = ceil(bitmaps.size.toFloat() / cols).toInt()
                 for (r in 0 until rowCount) {
-                    var rowMaxH = 0
+                    var sumAspectRatios = 0f
+                    val rowBitmaps = mutableListOf<Bitmap>()
                     for (c in 0 until cols) {
                         val index = r * cols + c
                         if (index < bitmaps.size) {
-                            val bitmap = bitmaps[index]
-                            // 在固定寬度下，為了維持比例所需的縮放高度
-                            val scale = cellW.toFloat() / bitmap.width
-                            val h = (bitmap.height * scale).toInt()
-                            if (h > rowMaxH) rowMaxH = h
+                            val bmp = bitmaps[index]
+                            rowBitmaps.add(bmp)
+                            sumAspectRatios += (bmp.width.toFloat() / bmp.height)
                         }
                     }
-                    rowHeights.add(rowMaxH)
+                    
+                    if (sumAspectRatios > 0) {
+                        val rowH = if (rowBitmaps.size == cols || r == 0) {
+                            targetCanvasWidth / sumAspectRatios
+                        } else {
+                            rowHeights.lastOrNull()?.toFloat() ?: (targetCanvasWidth / cols)
+                        }
+                        rowHeights.add(rowH.toInt())
+                    }
                 }
                 canvasHeight = rowHeights.sum()
             }
@@ -97,21 +104,36 @@ object ImageProcessor {
         val paint = Paint(Paint.FILTER_BITMAP_FLAG)
 
         if (direction == MergeDirection.GRID) {
-            val cellWF = canvasWidth.toFloat() / cols
             var currentY = 0f
+            val cols = max(1, gridCols)
             
             for (r in 0 until rowHeights.size) {
                 val rowH = rowHeights[r].toFloat()
+                var currentX = 0f
+                
+                // 重新計算這一行每張圖的實際寬度（以填充 RowH 為準）
+                val rowBitmaps = mutableListOf<Bitmap>()
+                var sumAspectRatios = 0f
                 for (c in 0 until cols) {
                     val index = r * cols + c
                     if (index < bitmaps.size) {
-                        val bitmap = bitmaps[index]
-                        val x = c * cellWF
-                        val y = currentY
-                        
-                        // 執行 Contain 縮放繪製，使用浮點數寬度確保無縫填充
-                        drawImageContain(canvas, bitmap, x, y, cellWF, rowH, paint)
+                        val bmp = bitmaps[index]
+                        rowBitmaps.add(bmp)
+                        sumAspectRatios += (bmp.width.toFloat() / bmp.height)
                     }
+                }
+
+                // 為了讓這行圖片無縫，每張圖的寬度 = rowH * 自身的寬高比
+                // 但如果這行不滿，我們就直接並排，不強行拉伸到 canvasWidth
+                for (bitmap in rowBitmaps) {
+                    val aspectRatio = bitmap.width.toFloat() / bitmap.height
+                    val drawW = rowH * aspectRatio
+                    
+                    val src = android.graphics.Rect(0, 0, bitmap.width, bitmap.height)
+                    val dst = android.graphics.RectF(currentX, currentY, currentX + drawW, currentY + rowH)
+                    canvas.drawBitmap(bitmap, src, dst, paint)
+                    
+                    currentX += drawW
                 }
                 currentY += rowH
             }
