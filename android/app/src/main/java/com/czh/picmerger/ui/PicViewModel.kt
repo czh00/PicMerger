@@ -362,6 +362,16 @@ class PicViewModel : ViewModel() {
         finalRenderedBitmap = null
         finalRenderedVideo = null
         isRenderReady = false
+        
+        // 恢復所有選項至預設值
+        direction = MergeDirection.GRID
+        gridCols = 2
+        outputMode = OutputMode.SCALE
+        outputValue = 100f
+        bgColor = 0xFF000000.toInt()
+        alignment = Alignment.CENTER
+        scaleMode = ScaleMode.ORIGINAL
+        
         statusMessage = "請上傳圖片或影片以開始"
     }
 }

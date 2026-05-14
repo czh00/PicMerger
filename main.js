@@ -927,9 +927,34 @@ async function shareImageToDevice() {
 function reset() {
     state.images.forEach(item => URL.revokeObjectURL(item.src));
     state.images = [];
-    updateUI();
     
-    elements.ctx.clearRect(0, 0, elements.canvas.width, elements.canvas.height);
+    // 恢復所有選項至預設值
+    state.direction = 'grid';
+    state.gridCols = 1;
+    state.outputScale = 100;
+    state.outputMode = 'scale';
+    state.bgColor = '#000000';
+    state.scaleMode = 'original';
+    state.isMerged = false;
+
+    // 同步 UI 元件狀態
+    if (elements.gridColsInput) elements.gridColsInput.value = 1;
+    if (elements.bgColorInput) elements.bgColorInput.value = '#000000';
+    if (elements.scaleModeSelect) elements.scaleModeSelect.value = 'original';
+    
+    const modeGroup = document.getElementById('output-mode-group');
+    if (modeGroup) {
+        modeGroup.querySelectorAll('button').forEach(b => b.classList.remove('active'));
+        const scaleBtn = modeGroup.querySelector('[data-value="scale"]');
+        if (scaleBtn) scaleBtn.classList.add('active');
+    }
+    
+    updateUI();
+    syncOutputValue();
+    
+    if (elements.ctx && elements.canvas) {
+        elements.ctx.clearRect(0, 0, elements.canvas.width, elements.canvas.height);
+    }
     elements.previewInfo.textContent = '請上傳圖片以開始';
     elements.downloadSection.style.display = 'none';
     elements.fileInput.value = '';
