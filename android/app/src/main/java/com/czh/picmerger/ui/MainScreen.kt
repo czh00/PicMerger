@@ -81,7 +81,7 @@ fun MainScreen(viewModel: PicViewModel = viewModel()) {
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text("圖片合併", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
-                Text("v1.0.21", fontSize = 12.sp, color = MaterialTheme.colorScheme.outline)
+                Text("v1.0.23", fontSize = 12.sp, color = MaterialTheme.colorScheme.outline)
             }
 
             ImageSelectorArea(viewModel, onAddClick = {
@@ -441,8 +441,19 @@ fun BottomActionTray(viewModel: PicViewModel) {
                             } ?: run { viewModel.isProcessing = false }
                         }
                     } else {
-                        // 影片模式：標準流程
-                        viewModel.performMerge(context) { }
+                        // 影片模式：單鍵切換邏輯
+                        if (viewModel.isRenderReady) {
+                            viewModel.isProcessing = true
+                            viewModel.statusMessage = "正在儲存影片..."
+                            viewModel.finalRenderedVideo?.let { file ->
+                                StorageHelper.saveVideoToGalleryAsync(context, file) { _, msg ->
+                                    viewModel.isProcessing = false
+                                    viewModel.statusMessage = msg
+                                }
+                            } ?: run { viewModel.isProcessing = false }
+                        } else {
+                            viewModel.performMerge(context) { }
+                        }
                     }
                 },
                 modifier = Modifier.weight(1f).height(48.dp),
@@ -452,34 +463,12 @@ fun BottomActionTray(viewModel: PicViewModel) {
                 if (viewModel.isProcessing) {
                     CircularProgressIndicator(modifier = Modifier.size(20.dp), color = Color.White)
                 } else {
-                    Icon(
-                        if (viewModel.isMediaTypeVideo) Icons.Default.AutoFixHigh else Icons.Default.Save, 
-                        contentDescription = null, 
-                        modifier = Modifier.size(18.dp)
-                    )
+                    val icon = if (!viewModel.isMediaTypeVideo || viewModel.isRenderReady) Icons.Default.Save else Icons.Default.AutoFixHigh
+                    val text = if (!viewModel.isMediaTypeVideo) "儲存合併圖" else if (viewModel.isRenderReady) "儲存影片" else "合併影片"
+                    
+                    Icon(icon, contentDescription = null, modifier = Modifier.size(18.dp))
                     Spacer(Modifier.width(4.dp))
-                    Text(if (viewModel.isMediaTypeVideo) "合併影片" else "儲存合併圖", fontSize = 14.sp)
-                }
-            }
-
-            // 僅在影片模式下顯示獨立儲存按鈕，圖片模式已整合進主按鈕
-            if (viewModel.isMediaTypeVideo) {
-                FilledTonalIconButton(
-                    onClick = {
-                        viewModel.isProcessing = true
-                        viewModel.statusMessage = "正在儲存檔案..."
-                        viewModel.finalRenderedVideo?.let { file ->
-                            StorageHelper.saveVideoToGalleryAsync(context, file) { success, msg ->
-                                viewModel.isProcessing = false
-                                viewModel.statusMessage = msg
-                            }
-                        } ?: run { viewModel.isProcessing = false }
-                    },
-                    modifier = Modifier.size(48.dp),
-                    shape = RoundedCornerShape(12.dp),
-                    enabled = viewModel.isRenderReady && !viewModel.isProcessing
-                ) {
-                    Icon(Icons.Default.Save, contentDescription = "Save")
+                    Text(text, fontSize = 14.sp)
                 }
             }
 
@@ -488,14 +477,22 @@ fun BottomActionTray(viewModel: PicViewModel) {
                     viewModel.isProcessing = true
                     viewModel.statusMessage = "準備分享檔案..."
                     if (viewModel.isMediaTypeVideo) {
-                        viewModel.finalRenderedVideo?.let { 
-                            StorageHelper.shareVideo(context, it) {
-                                viewModel.isProcessing = false
-                                viewModel.statusMessage = "分享準備完成"
+                        if (!viewModel.isRenderReady) {
+                            viewModel.performMerge(context) {
+                                viewModel.finalRenderedVideo?.let { 
+                                    StorageHelper.shareVideo(context, it) {
+                                        viewModel.isProcessing = false
+                                    }
+                                } ?: run { viewModel.isProcessing = false }
                             }
-                        } ?: run { viewModel.isProcessing = false }
+                        } else {
+                            viewModel.finalRenderedVideo?.let { 
+                                StorageHelper.shareVideo(context, it) {
+                                    viewModel.isProcessing = false
+                                }
+                            } ?: run { viewModel.isProcessing = false }
+                        }
                     } else {
-                        // 圖片模式若未渲染則先渲染再分享
                         if (viewModel.finalRenderedBitmap == null) {
                             viewModel.performMerge(context) {
                                 viewModel.finalRenderedBitmap?.let { 
@@ -515,7 +512,7 @@ fun BottomActionTray(viewModel: PicViewModel) {
                 },
                 modifier = Modifier.size(48.dp),
                 shape = RoundedCornerShape(12.dp),
-                enabled = (viewModel.isRenderReady || !viewModel.isMediaTypeVideo) && !viewModel.isProcessing && viewModel.images.isNotEmpty()
+                enabled = viewModel.images.isNotEmpty() && !viewModel.isProcessing
             ) {
                 Icon(Icons.Default.Share, contentDescription = "Share")
             }
