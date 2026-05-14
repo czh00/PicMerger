@@ -573,6 +573,26 @@ function handleTouchEnd(e) {
     });
 }
 
+// 輔助函式：等比例填充繪製 (Cover)
+function drawImageCover(ctx, img, x, y, w, h) {
+    const imgRatio = img.width / img.height;
+    const cellRatio = w / h;
+    let sx, sy, sw, sh;
+
+    if (imgRatio > cellRatio) {
+        sh = img.height;
+        sw = sh * cellRatio;
+        sx = (img.width - sw) / 2;
+        sy = 0;
+    } else {
+        sw = img.width;
+        sh = sw / cellRatio;
+        sx = 0;
+        sy = (img.height - sh) / 2;
+    }
+    ctx.drawImage(img, sx, sy, sw, sh, x, y, w, h);
+}
+
 // JS 即時預覽引擎 (採用 CSS 視覺縮放以提升效能)
 function previewRender() {
     if (state.images.length < 1) return;
@@ -583,34 +603,23 @@ function previewRender() {
     const cols = state.gridCols;
     const totalImgs = imgs.length;
 
-    // 動態偵測拼接模式：如果列數為 1 則為垂直；如果列數 = 圖片總數 則為水平
+    // 動態偵測拼接模式
     let effectiveDirection = state.direction;
     if (state.direction === 'grid') {
         if (cols === 1) effectiveDirection = 'vertical';
         else if (cols === totalImgs) effectiveDirection = 'horizontal';
     }
 
-    // Calculate dimensions based on effective mode
+    // Calculate dimensions
     if (effectiveDirection === 'horizontal') {
-        if (state.scaleMode === 'fit-first') {
-            const baseH = imgs[0].height;
-            canvasHeight = baseH;
-            canvasWidth = imgs.reduce((sum, item) => sum + item.width * (baseH / item.height), 0);
-        } else {
-            canvasHeight = Math.max(...imgs.map(i => i.height));
-            canvasWidth = imgs.reduce((sum, item) => sum + item.width * (canvasHeight / item.height), 0);
-        }
+        const baseH = state.scaleMode === 'fit-first' ? imgs[0].height : Math.max(...imgs.map(i => i.height));
+        canvasHeight = baseH;
+        canvasWidth = imgs.reduce((sum, item) => sum + item.width * (baseH / item.height), 0);
     } else if (effectiveDirection === 'vertical') {
-        if (state.scaleMode === 'fit-first') {
-            const baseW = imgs[0].width;
-            canvasWidth = baseW;
-            canvasHeight = imgs.reduce((sum, item) => sum + item.height * (baseW / item.width), 0);
-        } else {
-            canvasWidth = Math.max(...imgs.map(i => i.width));
-            canvasHeight = imgs.reduce((sum, item) => sum + item.height * (canvasWidth / item.width), 0);
-        }
+        const baseW = state.scaleMode === 'fit-first' ? imgs[0].width : Math.max(...imgs.map(i => i.width));
+        canvasWidth = baseW;
+        canvasHeight = imgs.reduce((sum, item) => sum + item.height * (baseW / item.width), 0);
     } else {
-        // 標準網格模式
         const rows = Math.ceil(totalImgs / cols);
         if (state.scaleMode === 'fit-first') {
             canvasWidth = imgs[0].width * cols;
@@ -624,15 +633,12 @@ function previewRender() {
     state.baseWidth = canvasWidth;
     state.baseHeight = canvasHeight;
 
-    // Apply scaling
     const finalScale = state.outputScale / 100;
     const finalWidth = canvasWidth * finalScale;
     const finalHeight = canvasHeight * finalScale;
 
     elements.canvas.width = finalWidth;
     elements.canvas.height = finalHeight;
-    
-    // Apply CSS width for visual scaling feedback (max-width 100% still applies from CSS)
     elements.canvas.style.width = finalWidth + 'px';
     
     elements.ctx.fillStyle = state.bgColor;
@@ -649,31 +655,20 @@ function previewRender() {
         imgs.forEach((item, index) => {
             const r = Math.floor(index / cols);
             const c = index % cols;
-            
-            const drawW = cellW;
-            const drawH = cellH;
-            let x = c * cellW;
-            let y = r * cellH;
-
-            elements.ctx.drawImage(item.img, x, y, drawW, drawH);
+            drawImageCover(elements.ctx, item.img, c * cellW, r * cellH, cellW, cellH);
         });
     } else {
         let offset = 0;
         imgs.forEach(item => {
             let drawW, drawH, x, y;
-
             if (effectiveDirection === 'horizontal') {
                 drawH = canvasHeight;
                 drawW = item.width * (canvasHeight / item.height);
-                x = offset;
-                y = 0;
-                offset += drawW;
+                x = offset; y = 0; offset += drawW;
             } else {
                 drawW = canvasWidth;
                 drawH = item.height * (canvasWidth / item.width);
-                x = 0;
-                y = offset;
-                offset += drawH;
+                x = 0; y = offset; offset += drawH;
             }
             elements.ctx.drawImage(item.img, x, y, drawW, drawH);
         });
@@ -681,7 +676,7 @@ function previewRender() {
 
     elements.ctx.restore();
     elements.downloadSection.style.display = 'block';
-    elements.previewInfo.textContent = `即時預覽中... 解析度: ${Math.round(finalWidth)} x ${Math.round(finalHeight)} (${state.outputScale.toFixed(1)}%)`;
+    elements.previewInfo.textContent = `即時預覽中... 解析度: ${Math.round(finalWidth)} x ${Math.round(finalHeight)}`;
     syncOutputValue();
 }
 
