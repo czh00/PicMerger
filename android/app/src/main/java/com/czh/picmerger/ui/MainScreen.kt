@@ -83,7 +83,7 @@ fun MainScreen(viewModel: PicViewModel = viewModel()) {
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text("圖片合併", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
-                Text("v1.0.32", fontSize = 12.sp, color = MaterialTheme.colorScheme.outline)
+                Text("v1.1.0", fontSize = 12.sp, color = MaterialTheme.colorScheme.outline)
             }
 
             ImageSelectorArea(viewModel, onAddClick = {
@@ -183,6 +183,11 @@ fun ImageSelectorArea(viewModel: PicViewModel, onAddClick: () -> Unit) {
                             .fillMaxWidth()
                             .heightIn(max = 400.dp)
                             .pointerInput(Unit) {
+                                /**
+                                 * 容器級拖拽監控 (Container-level Drag Control):
+                                 * 採用絕對座標系統，確保拖動中的圖片中心點精確鎖定在手指正下方，
+                                 * 徹底解決局部座標偏移造成的圖片「飄移」感。
+                                 */
                                 detectDragGesturesAfterLongPress(
                                     onDragStart = { offset ->
                                         // 1. 根據手指按下的絕對位置，換算出對應的索引
@@ -455,7 +460,7 @@ fun PreviewArea(viewModel: PicViewModel) {
             var scale by remember { mutableStateOf(1f) }
             var offset by remember { mutableStateOf(Offset.Zero) }
             val state = rememberTransformableState { zoomChange, offsetChange, _ ->
-                // 降低操控靈敏度，縮放變化量減為 40%，位移減半，提升精確度
+                // 操控降敏邏輯：降低縮放與位移的靈敏度，提供更穩定、精確的預覽體驗
                 val dampenedZoom = 1f + (zoomChange - 1f) * 0.4f
                 scale = (scale * dampenedZoom).coerceIn(1f, 5f)
                 offset += offsetChange * (scale * 0.5f)

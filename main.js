@@ -1,5 +1,7 @@
-// 診斷日誌：如果這行沒執行，代表 JS 載入失敗
-console.log("DEBUG: main.js loading...");
+/**
+ * PicMerger Web Core v1.1.0
+ * 負責圖片載入、方向修正、即時預覽與合成控制
+ */
 
 // 將核心函式暴露給全域，方便 HTML 直接呼叫
 window.handleFiles = handleFiles;

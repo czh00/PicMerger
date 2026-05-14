@@ -49,12 +49,16 @@ object ImageProcessor {
                 canvasHeight = bitmaps.sumOf { it.height }
             }
             MergeDirection.GRID -> {
-                // 1.1 設定基準寬度：以最大圖片寬度為準
+                /**
+                 * 無縫動態行高算法 (Seamless Dynamic Row Height):
+                 * 1. 不再使用固定列寬，改為「等高行」佈局。
+                 * 2. 對於每一行，根據該行所有圖片的寬高比 (Aspect Ratio) 總和，算出能剛好填滿畫布寬度的精確高度。
+                 * 3. 這樣可以確保圖片之間左右完全貼合，無任何黑邊或縫隙，且不裁切、不變形。
+                 */
                 val maxW = bitmaps.maxOf { it.width }
                 canvasWidth = maxW * cols
                 val targetCanvasWidth = canvasWidth.toFloat()
                 
-                // 1.2 動態行高算法：確保每一行圖片都能無縫填充寬度
                 val rowCount = ceil(bitmaps.size.toFloat() / cols).toInt()
                 for (r in 0 until rowCount) {
                     var sumAspectRatios = 0f
@@ -69,6 +73,8 @@ object ImageProcessor {
                     }
                     
                     if (sumAspectRatios > 0) {
+                        // 如果該行已滿或只有一行，精確計算高度以填充寬度
+                        // 如果最後一行不滿，則參考前一行的平均高度，避免圖片異常過大
                         val rowH = if (rowBitmaps.size == cols || r == 0) {
                             targetCanvasWidth / sumAspectRatios
                         } else {
@@ -123,8 +129,7 @@ object ImageProcessor {
                     }
                 }
 
-                // 為了讓這行圖片無縫，每張圖的寬度 = rowH * 自身的寬高比
-                // 但如果這行不滿，我們就直接並排，不強行拉伸到 canvasWidth
+                // 逐列繪製圖片，計算每張圖的動態寬度以達成無縫填充
                 for (bitmap in rowBitmaps) {
                     val aspectRatio = bitmap.width.toFloat() / bitmap.height
                     val drawW = rowH * aspectRatio
