@@ -59,7 +59,7 @@ function initElements() {
 }
 
 async function init() {
-    console.log("PicMerger v1.0.9 Initializing...");
+    console.log("PicMerger v1.0.10 Initializing...");
     loadPlugins(); 
     initElements();
     
