@@ -74,8 +74,15 @@ fun MainScreen(viewModel: PicViewModel = viewModel()) {
                     )
                 )
         ) {
-            // 介面頂部間距 (替代原本的 TopAppBar)
-            Spacer(modifier = Modifier.height(8.dp))
+            // 介面頂部標題與版本
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text("圖片合併", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+                Text("v1.0.21", fontSize = 12.sp, color = MaterialTheme.colorScheme.outline)
+            }
 
             ImageSelectorArea(viewModel, onAddClick = {
                 launcher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageAndVideo))
@@ -447,8 +454,21 @@ fun BottomActionTray(viewModel: PicViewModel) {
         ) {
             Button(
                 onClick = { 
-                    viewModel.performMerge(context) { 
-                        // Done
+                    if (!viewModel.isMediaTypeVideo) {
+                        // 圖片模式：自動執行 合併 -> 儲存 (秒存流程)
+                        viewModel.performMerge(context) { 
+                            viewModel.isProcessing = true
+                            viewModel.statusMessage = "正在儲存至相簿..."
+                            viewModel.finalRenderedBitmap?.let { bitmap ->
+                                StorageHelper.saveBitmapToGalleryAsync(context, bitmap) { _, msg ->
+                                    viewModel.isProcessing = false
+                                    viewModel.statusMessage = msg
+                                }
+                            } ?: run { viewModel.isProcessing = false }
+                        }
+                    } else {
+                        // 影片模式：標準流程
+                        viewModel.performMerge(context) { }
                     }
                 },
                 modifier = Modifier.weight(1f).height(48.dp),
@@ -458,38 +478,35 @@ fun BottomActionTray(viewModel: PicViewModel) {
                 if (viewModel.isProcessing) {
                     CircularProgressIndicator(modifier = Modifier.size(20.dp), color = Color.White)
                 } else {
-                    Icon(Icons.Default.AutoFixHigh, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Icon(
+                        if (viewModel.isMediaTypeVideo) Icons.Default.AutoFixHigh else Icons.Default.Save, 
+                        contentDescription = null, 
+                        modifier = Modifier.size(18.dp)
+                    )
                     Spacer(Modifier.width(4.dp))
-                    Text(if (viewModel.isMediaTypeVideo) "合併影片" else "合併圖", fontSize = 14.sp)
+                    Text(if (viewModel.isMediaTypeVideo) "合併影片" else "儲存合併圖", fontSize = 14.sp)
                 }
             }
 
-            FilledTonalIconButton(
-                onClick = {
-                    viewModel.isProcessing = true
-                    viewModel.statusMessage = "正在儲存檔案..."
-                    
-                    if (viewModel.isMediaTypeVideo) {
+            // 僅在影片模式下顯示獨立儲存按鈕，圖片模式已整合進主按鈕
+            if (viewModel.isMediaTypeVideo) {
+                FilledTonalIconButton(
+                    onClick = {
+                        viewModel.isProcessing = true
+                        viewModel.statusMessage = "正在儲存檔案..."
                         viewModel.finalRenderedVideo?.let { file ->
                             StorageHelper.saveVideoToGalleryAsync(context, file) { success, msg ->
                                 viewModel.isProcessing = false
                                 viewModel.statusMessage = msg
                             }
                         } ?: run { viewModel.isProcessing = false }
-                    } else {
-                        viewModel.finalRenderedBitmap?.let { bitmap ->
-                            StorageHelper.saveBitmapToGalleryAsync(context, bitmap) { success, msg ->
-                                viewModel.isProcessing = false
-                                viewModel.statusMessage = msg
-                            }
-                        } ?: run { viewModel.isProcessing = false }
-                    }
-                },
-                modifier = Modifier.size(48.dp),
-                shape = RoundedCornerShape(12.dp),
-                enabled = viewModel.isRenderReady && !viewModel.isProcessing
-            ) {
-                Icon(Icons.Default.Save, contentDescription = "Save")
+                    },
+                    modifier = Modifier.size(48.dp),
+                    shape = RoundedCornerShape(12.dp),
+                    enabled = viewModel.isRenderReady && !viewModel.isProcessing
+                ) {
+                    Icon(Icons.Default.Save, contentDescription = "Save")
+                }
             }
 
             FilledTonalIconButton(
@@ -504,17 +521,27 @@ fun BottomActionTray(viewModel: PicViewModel) {
                             }
                         } ?: run { viewModel.isProcessing = false }
                     } else {
-                        viewModel.finalRenderedBitmap?.let { 
-                            StorageHelper.shareBitmap(context, it) {
-                                viewModel.isProcessing = false
-                                viewModel.statusMessage = "分享準備完成"
-                            } 
-                        } ?: run { viewModel.isProcessing = false }
+                        // 圖片模式若未渲染則先渲染再分享
+                        if (viewModel.finalRenderedBitmap == null) {
+                            viewModel.performMerge(context) {
+                                viewModel.finalRenderedBitmap?.let { 
+                                    StorageHelper.shareBitmap(context, it) {
+                                        viewModel.isProcessing = false
+                                    } 
+                                } ?: run { viewModel.isProcessing = false }
+                            }
+                        } else {
+                            viewModel.finalRenderedBitmap?.let { 
+                                StorageHelper.shareBitmap(context, it) {
+                                    viewModel.isProcessing = false
+                                } 
+                            } ?: run { viewModel.isProcessing = false }
+                        }
                     }
                 },
                 modifier = Modifier.size(48.dp),
                 shape = RoundedCornerShape(12.dp),
-                enabled = viewModel.isRenderReady && !viewModel.isProcessing
+                enabled = (viewModel.isRenderReady || !viewModel.isMediaTypeVideo) && !viewModel.isProcessing && viewModel.images.isNotEmpty()
             ) {
                 Icon(Icons.Default.Share, contentDescription = "Share")
             }
