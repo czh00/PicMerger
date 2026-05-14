@@ -58,35 +58,7 @@ function initElements() {
     console.log("Elements initialized:", Object.keys(elements).filter(k => elements[k]));
 }
 
-async function init() {
-    console.log("PicMerger v1.0.10 Initializing...");
-    loadPlugins(); 
-    initElements();
-    
-    // 僅在行動端且支援分享時才顯示按鈕
-    if (elements.btnShare) {
-        const isNative = window.Capacitor && window.Capacitor.isNativePlatform();
-        if (isNative && state.canShare) {
-            elements.btnShare.style.setProperty('display', 'block', 'important');
-            elements.btnShare.disabled = false;
-        } else {
-            elements.btnShare.style.setProperty('display', 'none', 'important');
-        }
-    }
 
-    setupEventListeners();
-    console.log("Event listeners attached.");
-    
-    // 動態載入 WASM，不阻塞主流程
-    try {
-        const { default: initWasm, merge_images } = await import('./pkg-wasm/pic_wasm.js');
-        await initWasm();
-        merge_images_fn = merge_images;
-        console.log("WASM engine loaded successfully.");
-    } catch (e) {
-        console.warn("WASM 載入跳過 (採用 JS 降級引擎):", e);
-    }
-}
 
 function setupEventListeners() {
     // 終極備援：如果一般綁定失效，使用全域點擊代理
@@ -349,7 +321,6 @@ function updateUI() {
             elements.downloadSection.style.display = 'none';
         });
 
-        // Drag and Drop Events for Main List
         div.addEventListener('dragstart', handleDragStart);
         div.addEventListener('dragover', handleDragOver);
         div.addEventListener('drop', handleDrop);
@@ -357,7 +328,6 @@ function updateUI() {
         div.addEventListener('dragenter', handleDragEnter);
         div.addEventListener('dragleave', handleDragLeave);
 
-        // Touch Events for Mobile
         div.addEventListener('touchstart', handleTouchStart, { passive: false });
         div.addEventListener('touchmove', handleTouchMove, { passive: false });
         div.addEventListener('touchend', handleTouchEnd, { passive: false });
@@ -372,16 +342,12 @@ function updateUI() {
 function updateGridColsLimit() {
     if (elements.gridColsInput) {
         const count = state.images.length || 1;
-        console.log("Updating Grid Max to:", count);
         elements.gridColsInput.max = count;
-        // 強制同步拉桿的視覺位置
         if (state.gridCols > count) state.gridCols = count;
         elements.gridColsInput.value = state.gridCols;
         
         const valDisplay = document.getElementById('grid-cols-value');
         if (valDisplay) valDisplay.textContent = state.gridCols;
-    } else {
-        console.warn("Grid input not found during update");
     }
 }
 
@@ -390,20 +356,25 @@ function syncOutputValue() {
     
     const label = document.getElementById('output-value-label');
     let currentVal = 100;
+    const scale = state.outputScale / 100;
+    const w = Math.round(state.baseWidth * scale);
+    const h = Math.round(state.baseHeight * scale);
 
     if (state.outputMode === 'scale') {
         elements.outputValueInput.max = 100;
         currentVal = Math.round(state.outputScale);
+        if (label) label.innerHTML = `${currentVal}% <small>(${w} x ${h})</small>`;
     } else if (state.outputMode === 'width') {
-        elements.outputValueInput.max = state.baseWidth;
-        currentVal = Math.round(state.baseWidth * (state.outputScale / 100));
+        elements.outputValueInput.max = state.baseWidth * 2; 
+        currentVal = w;
+        if (label) label.innerHTML = `${currentVal}px <small>(高: ${h}px)</small>`;
     } else if (state.outputMode === 'height') {
-        elements.outputValueInput.max = state.baseHeight;
-        currentVal = Math.round(state.baseHeight * (state.outputScale / 100));
+        elements.outputValueInput.max = state.baseHeight * 2;
+        currentVal = h;
+        if (label) label.innerHTML = `${currentVal}px <small>(寬: ${w}px)</small>`;
     }
     
     elements.outputValueInput.value = currentVal;
-    if (label) label.textContent = currentVal + (state.outputMode === 'scale' ? '%' : 'px');
 }
 
 function moveImage(index, delta) {
@@ -441,7 +412,6 @@ function renderSortList() {
             <div class="info">${item.name}</div>
         `;
         
-        // Drag and Drop Events
         div.addEventListener('dragstart', handleDragStart);
         div.addEventListener('dragover', handleDragOver);
         div.addEventListener('drop', handleDrop);
@@ -449,7 +419,6 @@ function renderSortList() {
         div.addEventListener('dragenter', handleDragEnter);
         div.addEventListener('dragleave', handleDragLeave);
 
-        // Touch Events for Mobile
         div.addEventListener('touchstart', handleTouchStart, { passive: false });
         div.addEventListener('touchmove', handleTouchMove, { passive: false });
         div.addEventListener('touchend', handleTouchEnd, { passive: false });
@@ -464,7 +433,6 @@ function handleDragStart(e) {
     draggedItemIndex = parseInt(this.dataset.index);
     this.classList.add('dragging');
     e.dataTransfer.effectAllowed = 'move';
-    // Fix for Firefox
     e.dataTransfer.setData('text/plain', draggedItemIndex);
 }
 
@@ -487,14 +455,12 @@ function handleDrop(e) {
     
     const targetIndex = parseInt(this.dataset.index);
     if (draggedItemIndex !== targetIndex) {
-        // Move item instead of swapping (Insertion logic)
         const item = state.images.splice(draggedItemIndex, 1)[0];
         state.images.splice(targetIndex, 0, item);
         
         updateUI();
         renderSortList();
         
-        // Auto-render if preview was already shown
         if (elements.downloadSection.style.display === 'block') {
             previewRender();
         }
@@ -509,7 +475,6 @@ function handleDragEnd(e) {
     });
 }
 
-// Touch Handlers for Mobile
 let lastTouchTarget = null;
 
 function handleTouchStart(e) {
@@ -523,8 +488,6 @@ function handleTouchMove(e) {
     e.preventDefault();
 
     const touch = e.touches[0];
-    
-    // Disable pointer events on dragged item to "see through" it
     this.style.pointerEvents = 'none';
     const target = document.elementFromPoint(touch.clientX, touch.clientY);
     this.style.pointerEvents = 'auto';
@@ -552,7 +515,6 @@ function handleTouchEnd(e) {
         lastTouchTarget.classList.remove('drag-over');
         
         if (draggedItemIndex !== null && !isNaN(targetIndex) && draggedItemIndex !== targetIndex) {
-            // Move item instead of swapping (Insertion logic)
             const item = state.images.splice(draggedItemIndex, 1)[0];
             state.images.splice(targetIndex, 0, item);
             
@@ -573,7 +535,6 @@ function handleTouchEnd(e) {
     });
 }
 
-// 輔助函式：等比例填充繪製 (Cover)
 function drawImageCover(ctx, img, x, y, w, h) {
     const imgRatio = img.width / img.height;
     const cellRatio = w / h;
@@ -593,7 +554,6 @@ function drawImageCover(ctx, img, x, y, w, h) {
     ctx.drawImage(img, sx, sy, sw, sh, x, y, w, h);
 }
 
-// JS 即時預覽引擎 (採用 CSS 視覺縮放以提升效能)
 function previewRender() {
     if (state.images.length < 1) return;
     
@@ -603,14 +563,12 @@ function previewRender() {
     const cols = state.gridCols;
     const totalImgs = imgs.length;
 
-    // 動態偵測拼接模式
     let effectiveDirection = state.direction;
     if (state.direction === 'grid') {
         if (cols === 1) effectiveDirection = 'vertical';
         else if (cols === totalImgs) effectiveDirection = 'horizontal';
     }
 
-    // Calculate dimensions
     if (effectiveDirection === 'horizontal') {
         const baseH = state.scaleMode === 'fit-first' ? imgs[0].height : Math.max(...imgs.map(i => i.height));
         canvasHeight = baseH;
@@ -680,15 +638,66 @@ function previewRender() {
     syncOutputValue();
 }
 
-// 高品質 Rust WASM 拼接引擎
+async function init() {
+    console.log("PicMerger v1.0.12 Initializing...");
+    loadPlugins(); 
+    initElements();
+    
+    if (elements.btnShare) {
+        const isNative = window.Capacitor && window.Capacitor.isNativePlatform();
+        if (isNative && state.canShare) {
+            elements.btnShare.style.setProperty('display', 'block', 'important');
+            elements.btnShare.disabled = false;
+        } else {
+            elements.btnShare.style.setProperty('display', 'none', 'important');
+        }
+    }
+
+    setupEventListeners();
+    console.log("Event listeners attached.");
+    
+    try {
+        const { default: initWasm, merge_images } = await import('./pkg-wasm/pic_wasm.js');
+        await initWasm();
+        merge_images_fn = merge_images;
+        console.log("WASM engine loaded successfully.");
+    } catch (e) {
+        console.warn("WASM 載入跳過 (採用 JS 降級引擎):", e);
+    }
+}
+
 async function render() {
     if (state.images.length < 1) return;
     
-    elements.previewInfo.textContent = "Rust 引擎正在拼圖中...";
+    elements.previewInfo.textContent = "正在拼圖中...";
     elements.btnMerge.disabled = true;
 
     try {
-        // Collect all image data as a single buffer for Rust
+        const dirMap = { 'horizontal': 0, 'vertical': 1, 'grid': 2 };
+        
+        let effectiveDirValue = dirMap[state.direction];
+        let isGrid = false;
+        if (state.direction === 'grid') {
+            if (state.gridCols === 1) effectiveDirValue = dirMap['vertical'];
+            else if (state.gridCols === state.images.length) effectiveDirValue = dirMap['horizontal'];
+            else isGrid = true;
+        }
+
+        if (isGrid || !merge_images_fn) {
+            console.info("使用 JS 引擎渲染以保證比例鎖定...");
+            previewRender(); 
+            const dataUrl = elements.canvas.toDataURL('image/png');
+            const blob = await (await fetch(dataUrl)).blob();
+            const url = URL.createObjectURL(blob);
+            
+            elements.downloadSection.style.display = 'block';
+            if (elements.btnShare) elements.btnShare.disabled = !state.canShare;
+            elements.previewInfo.textContent = `處理完成！解析度: ${elements.canvas.width}x${elements.canvas.height} (比例鎖定)`;
+            elements.btnMerge.disabled = false;
+            syncOutputValue();
+            return;
+        }
+
         const buffers = await Promise.all(state.images.map(img => 
             fetch(img.src).then(r => r.arrayBuffer())
         ));
@@ -705,54 +714,21 @@ async function render() {
             currentPos += arr.length;
         });
 
-        const dirMap = { 'horizontal': 0, 'vertical': 1, 'grid': 2 };
-        
-        // 動態偵測拼接模式：如果列數為 1 則為垂直；如果列數 = 圖片總數 則為水平
-        let effectiveDirValue = dirMap[state.direction];
-        if (state.direction === 'grid') {
-            if (state.gridCols === 1) effectiveDirValue = dirMap['vertical'];
-            else if (state.gridCols === state.images.length) effectiveDirValue = dirMap['horizontal'];
-        }
-        
         const r = parseInt(state.bgColor.slice(1, 3), 16);
         const g = parseInt(state.bgColor.slice(3, 5), 16);
         const b = parseInt(state.bgColor.slice(5, 7), 16);
 
-        // Call Rust Engine
         const startTime = performance.now();
-        let mergedPng;
-        try {
-            if (!merge_images_fn) throw new Error("WASM_MISSING");
-            
-            mergedPng = merge_images_fn(
-                combinedData,
-                offsets,
-                effectiveDirValue,
-                1, // Default to center since alignment is removed
-                state.gridCols,
-                r, g, b
-            );
-        } catch (wasmErr) {
-            if (wasmErr.message === "WASM_MISSING" || wasmErr.toString().includes("WASM_MISSING")) {
-                console.info("使用 JS Fallback 引擎渲染...");
-                previewRender(); // 呼叫 Canvas 預覽渲染
-                const dataUrl = elements.canvas.toDataURL('image/png');
-                const blob = await (await fetch(dataUrl)).blob();
-                const url = URL.createObjectURL(blob);
-                
-                elements.downloadSection.style.display = 'block';
-                if (elements.btnShare) elements.btnShare.disabled = !state.canShare;
-                elements.previewInfo.textContent = `JS 引擎處理完成！解析度: ${elements.canvas.width}x${elements.canvas.height}`;
-                elements.btnMerge.disabled = false;
-                syncOutputValue();
-                return;
-            }
-            throw wasmErr;
-        }
+        const mergedPng = merge_images_fn(
+            combinedData,
+            offsets,
+            effectiveDirValue,
+            1, 
+            state.gridCols,
+            r, g, b
+        );
         const endTime = performance.now();
-        console.log(`Rust 拼接耗時: ${(endTime - startTime).toFixed(2)}ms`);
 
-        // Display Result
         const blob = new Blob([mergedPng], { type: 'image/png' });
         const url = URL.createObjectURL(blob);
         
@@ -760,7 +736,6 @@ async function render() {
         resultImg.onload = () => {
             state.baseWidth = resultImg.width;
             state.baseHeight = resultImg.height;
-            
             elements.canvas.width = resultImg.width;
             elements.canvas.height = resultImg.height;
             elements.ctx.drawImage(resultImg, 0, 0);
