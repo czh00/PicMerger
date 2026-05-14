@@ -22,7 +22,7 @@
     })();
     const q = "modulepreload", Z = function(t, n) {
         return new URL(t, n).href;
-    }, R = {}, F = function(n, a, i) {
+    }, B = {}, F = function(n, a, i) {
         let r = Promise.resolve();
         if (a && a.length > 0) {
             let m = function(d) {
@@ -36,8 +36,8 @@
             };
             const h = document.getElementsByTagName("link"), v = document.querySelector("meta[property=csp-nonce]"), b = v?.nonce || v?.getAttribute("nonce");
             r = m(a.map((d)=>{
-                if (d = Z(d, i), d in R) return;
-                R[d] = !0;
+                if (d = Z(d, i), d in B) return;
+                B[d] = !0;
                 const c = d.endsWith(".css"), l = c ? '[rel="stylesheet"]' : "";
                 if (!!i) for(let f = h.length - 1; f >= 0; f--){
                     const p = h[f];
@@ -61,7 +61,6 @@
             return n().catch(s);
         });
     };
-    console.log("DEBUG: main.js loading...");
     window.handleFiles = P;
     let k, U, G, Y;
     async function J() {}
@@ -256,12 +255,12 @@
         o.outputMode === "scale" ? (e.outputValueInput.max = 100, n = Math.round(o.outputScale), t && (t.innerHTML = `${n}% <small>(${i} x ${r})</small>`)) : o.outputMode === "width" ? (e.outputValueInput.max = o.baseWidth * 2, n = i, t && (t.innerHTML = `${n}px <small>(高: ${r}px)</small>`)) : o.outputMode === "height" && (e.outputValueInput.max = o.baseHeight * 2, n = r, t && (t.innerHTML = `${n}px <small>(寬: ${i}px)</small>`)), e.outputValueInput.value = n;
     }
     function Q() {
-        B(), e.sortModal.classList.add("show"), document.body.style.overflow = "hidden";
+        R(), e.sortModal.classList.add("show"), document.body.style.overflow = "hidden";
     }
     function M() {
         e.sortModal.classList.remove("show"), document.body.style.overflow = "";
     }
-    function B() {
+    function R() {
         e.sortList.innerHTML = "", o.images.forEach((t, n)=>{
             const a = document.createElement("div");
             a.className = "sort-item", a.draggable = !0, a.dataset.index = n, a.innerHTML = `
@@ -294,7 +293,7 @@
         const n = parseInt(this.dataset.index);
         if (y !== n) {
             const a = o.images.splice(y, 1)[0];
-            o.images.splice(n, 0, a), S(), B(), e.downloadSection.style.display === "block" && L();
+            o.images.splice(n, 0, a), S(), R(), e.downloadSection.style.display === "block" && L();
         }
         return !1;
     }
@@ -322,7 +321,7 @@
             const n = parseInt(E.dataset.index);
             if (E.classList.remove("drag-over"), y !== null && !isNaN(n) && y !== n) {
                 const a = o.images.splice(y, 1)[0];
-                o.images.splice(n, 0, a), S(), B(), e.downloadSection.style.display === "block" && L();
+                o.images.splice(n, 0, a), S(), R(), e.downloadSection.style.display === "block" && L();
             }
         }
         E = null, y = null, document.querySelectorAll(".image-item, .sort-item").forEach((n)=>{
