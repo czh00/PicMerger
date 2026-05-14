@@ -173,26 +173,39 @@ function setupEventListeners() {
     }
 
     if (elements.btnMerge) {
-        elements.btnMerge.textContent = '💾 儲存合併圖';
         elements.btnMerge.addEventListener('click', async () => {
             if (state.images.length < 1) return;
             
-            elements.btnMerge.disabled = true;
-            const originalText = elements.btnMerge.textContent;
-            elements.btnMerge.textContent = '正在準備檔案...';
+            // 偵測是否有影片檔案
+            const hasVideo = state.images.some(img => img.isVideo);
             
-            setTimeout(async () => {
+            if (hasVideo) {
+                // 影片模式：需要生成步驟
+                elements.btnMerge.disabled = true;
+                const originalText = elements.btnMerge.textContent;
+                elements.btnMerge.textContent = '🎬 正在生成影片...';
+                
+                setTimeout(async () => {
+                    try {
+                        await render();
+                        await saveImageToStorage();
+                    } catch (err) {
+                        console.error('Video error:', err);
+                        alert('影片處理失敗: ' + (err.message || err));
+                    } finally {
+                        elements.btnMerge.disabled = false;
+                        elements.btnMerge.textContent = originalText;
+                    }
+                }, 50);
+            } else {
+                // 圖片模式：秒存流程 (直接儲存目前畫布，不需再生成)
                 try {
-                    await render();
                     await saveImageToStorage();
                 } catch (err) {
                     console.error('Save error:', err);
                     alert('儲存失敗: ' + (err.message || err));
-                } finally {
-                    elements.btnMerge.disabled = false;
-                    elements.btnMerge.textContent = originalText;
                 }
-            }, 50);
+            }
         });
     }
     
@@ -247,18 +260,30 @@ async function handleFiles(files) {
 
     for (const file of Array.from(files)) {
         const isImage = file.type.startsWith('image/') || /\.(jpg|jpeg|png|webp|gif|bmp)$/i.test(file.name);
-        if (!isImage) continue;
+        const isVideo = file.type.startsWith('video/') || /\.(mp4|webm|mov|avi)$/i.test(file.name);
+        if (!isImage && !isVideo) continue;
 
         try {
+            if (isVideo) {
+                // 影片模式：建立基本資訊，實際合成交由 Native 端或後台處理
+                newImages.push({
+                    img: new Image(), 
+                    name: file.name,
+                    width: 1920, // 預設尺寸
+                    height: 1080,
+                    src: 'placeholder_video', 
+                    isVideo: true,
+                    file: file
+                });
+                continue;
+            }
+
             const item = await new Promise((resolve, reject) => {
                 const img = new Image();
                 const url = URL.createObjectURL(file);
                 
                 img.onload = () => {
-                    // 使用 Canvas "烘焙" 圖片方向
-                    // 現代瀏覽器會自動依據 EXIF 旋轉 <img>，將其繪製到 Canvas 可取得修正後的點陣圖
                     const canvas = document.createElement('canvas');
-                    // 使用 naturalWidth/Height 確保取得正確的視覺尺寸
                     canvas.width = img.width;
                     canvas.height = img.height;
                     const ctx = canvas.getContext('2d');
@@ -266,16 +291,16 @@ async function handleFiles(files) {
                     
                     canvas.toBlob((blob) => {
                         const orientedUrl = URL.createObjectURL(blob);
-                        // 建立新的 Image 物件以載入烘焙後的 URL，確保後續計算正確
                         const orientedImg = new Image();
                         orientedImg.onload = () => {
-                            URL.revokeObjectURL(url); // Clean up original
+                            URL.revokeObjectURL(url);
                             resolve({
                                 img: orientedImg,
                                 name: file.name,
                                 width: orientedImg.width,
                                 height: orientedImg.height,
-                                src: orientedUrl
+                                src: orientedUrl,
+                                isVideo: false
                             });
                         };
                         orientedImg.src = orientedUrl;
@@ -284,9 +309,8 @@ async function handleFiles(files) {
                 
                 img.onerror = () => {
                     URL.revokeObjectURL(url);
-                    reject(new Error(`圖片讀取失敗: ${file.name}`));
+                    reject(new Error(`檔案讀取失敗: ${file.name}`));
                 };
-                
                 img.src = url;
             });
             newImages.push(item);
@@ -349,7 +373,12 @@ function updateUI() {
         elements.imageList.appendChild(div);
     });
 
-    elements.btnMerge.disabled = state.images.length < 2;
+    elements.btnMerge.disabled = state.images.length < 1;
+    
+    // 智慧切換按鈕文字：純圖片則顯示「儲存」，含影片則顯示「生成」
+    const hasVideo = state.images.some(img => img.isVideo);
+    elements.btnMerge.textContent = hasVideo ? '🎬 生成合併影片' : '💾 儲存合併圖';
+
     updateGridColsLimit();
 }
 
