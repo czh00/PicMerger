@@ -108,7 +108,7 @@
         }, console.log("Elements initialized:", Object.keys(e).filter((n)=>e[n]));
     }
     async function K() {
-        console.log("PicMerger v1.0.9 Initializing..."), J(), U(), e.btnShare && (window.Capacitor && window.Capacitor.isNativePlatform() && o.canShare ? (e.btnShare.style.setProperty("display", "block", "important"), e.btnShare.disabled = !1) : e.btnShare.style.setProperty("display", "none", "important")), X(), console.log("Event listeners attached.");
+        console.log("PicMerger v1.0.10 Initializing..."), J(), U(), e.btnShare && (window.Capacitor && window.Capacitor.isNativePlatform() && o.canShare ? (e.btnShare.style.setProperty("display", "block", "important"), e.btnShare.disabled = !1) : e.btnShare.style.setProperty("display", "none", "important")), X(), console.log("Event listeners attached.");
         try {
             const { default: n, merge_images: t } = await Z(async ()=>{
                 const { default: a, merge_images: i } = await import("./pic_wasm-C60cSF7V.js");
