@@ -41,6 +41,10 @@ class PicViewModel : ViewModel() {
     var baseWidth by mutableStateOf(1080)
     var baseHeight by mutableStateOf(1920)
     
+    // 即時計算出的最終解析度
+    var finalWidth by mutableStateOf(0)
+    var finalHeight by mutableStateOf(0)
+    
     var previewBitmap by mutableStateOf<Bitmap?>(null)
     var finalRenderedBitmap: Bitmap? = null
     var finalRenderedVideo: File? = null
@@ -212,6 +216,15 @@ class PicViewModel : ViewModel() {
             baseWidth = baseDims.first
             baseHeight = baseDims.second
 
+            // 即時計算最終輸出的預估解析度
+            val finalScale = when (outputMode) {
+                OutputMode.SCALE -> outputValue / 100f
+                OutputMode.WIDTH -> if (baseWidth > 0) outputValue / baseWidth else 1f
+                OutputMode.HEIGHT -> if (baseHeight > 0) outputValue / baseHeight else 1f
+            }
+            finalWidth = (baseWidth * finalScale).toInt()
+            finalHeight = (baseHeight * finalScale).toInt()
+
             val result = withContext(Dispatchers.Default) {
                 // For preview, we treat videos as images (extract first frame) using ImageProcessor
                 ImageProcessor.mergeImages(
@@ -227,42 +240,53 @@ class PicViewModel : ViewModel() {
 
     /**
      * 計算原始合併尺寸（不縮放時的解析度）
-     * 用於 UI 拉桿的上限設定
+     * 用於 UI 拉桿的上限設定與最終尺寸預估
      */
     private fun calculateBaseDimensions(context: Context): Pair<Int, Int> {
         if (images.isEmpty()) return 0 to 0
         val cols = maxOf(1, gridCols)
-        val rows = kotlin.math.ceil(images.size.toDouble() / cols).toInt()
         
         if (isMediaTypeVideo) {
             val minW = images.minOf { it.width }.takeIf { it > 0 } ?: 720
             val minH = images.minOf { it.height }.takeIf { it > 0 } ?: 720
             val finalW = if (minW % 2 != 0) minW - 1 else minW
             val finalH = if (minH % 2 != 0) minH - 1 else minH
+            val rows = kotlin.math.ceil(images.size.toDouble() / cols).toInt()
             return (finalW * cols) to (finalH * rows)
         } else {
             val bitmaps = images.mapNotNull { it.cachedBitmap ?: ImageProcessor.loadBitmap(context, it) }
             if (bitmaps.isEmpty()) return 0 to 0
             
             return if (direction == MergeDirection.GRID) {
+                // 與 ImageProcessor v1.0.30 相同的無縫網格邏輯
                 val maxW = bitmaps.maxOf { it.width }
-                val cellW = maxW
-                var totalH = 0
+                val targetCanvasWidth = (maxW * cols).toFloat()
+                var totalH = 0f
                 val rowCount = kotlin.math.ceil(images.size.toDouble() / cols).toInt()
+                val rowHeights = mutableListOf<Float>()
+
                 for (r in 0 until rowCount) {
-                    var rowMaxH = 0
+                    var sumAspectRatios = 0f
+                    var rowSize = 0
                     for (c in 0 until cols) {
                         val index = r * cols + c
                         if (index < bitmaps.size) {
-                            val bitmap = bitmaps[index]
-                            val scale = cellW.toFloat() / bitmap.width
-                            val h = (bitmap.height * scale).toInt()
-                            if (h > rowMaxH) rowMaxH = h
+                            val bmp = bitmaps[index]
+                            sumAspectRatios += (bmp.width.toFloat() / bmp.height)
+                            rowSize++
                         }
                     }
-                    totalH += rowMaxH
+                    if (sumAspectRatios > 0) {
+                        val rowH = if (rowSize == cols || r == 0) {
+                            targetCanvasWidth / sumAspectRatios
+                        } else {
+                            rowHeights.lastOrNull() ?: (targetCanvasWidth / cols)
+                        }
+                        rowHeights.add(rowH)
+                        totalH += rowH
+                    }
                 }
-                (maxW * cols) to totalH
+                targetCanvasWidth.toInt() to totalH.toInt()
             } else if (direction == MergeDirection.HORIZONTAL) {
                 bitmaps.sumOf { it.width } to bitmaps.maxOf { it.height }
             } else {

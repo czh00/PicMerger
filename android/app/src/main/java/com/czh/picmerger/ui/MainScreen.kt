@@ -83,7 +83,7 @@ fun MainScreen(viewModel: PicViewModel = viewModel()) {
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text("圖片合併", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
-                Text("v1.0.30", fontSize = 12.sp, color = MaterialTheme.colorScheme.outline)
+                Text("v1.0.31", fontSize = 12.sp, color = MaterialTheme.colorScheme.outline)
             }
 
             ImageSelectorArea(viewModel, onAddClick = {
@@ -439,7 +439,17 @@ fun PreviewArea(viewModel: PicViewModel) {
         shape = RoundedCornerShape(16.dp)
     ) {
         Column(modifier = Modifier.padding(8.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-            Text(viewModel.statusMessage + " (雙指可縮放與拖曳預覽)", style = MaterialTheme.typography.labelSmall)
+            Text(viewModel.statusMessage, style = MaterialTheme.typography.labelSmall)
+            if (viewModel.finalWidth > 0) {
+                Text(
+                    "預估最終尺寸: ${viewModel.finalWidth} x ${viewModel.finalHeight}",
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.primary,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(vertical = 2.dp)
+                )
+            }
+            Text("(雙指可縮放與拖曳預覽)", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.outline)
             Spacer(Modifier.height(4.dp))
             
             var scale by remember { mutableStateOf(1f) }
