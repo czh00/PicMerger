@@ -574,6 +574,10 @@ function previewRender() {
         else if (cols === totalImgs) effectiveDirection = 'horizontal';
     }
 
+    const rowHeights = [];
+    let cellW = 0;
+
+    // Calculate dimensions
     if (effectiveDirection === 'horizontal') {
         const baseH = state.scaleMode === 'fit-first' ? imgs[0].height : Math.max(...imgs.map(i => i.height));
         canvasHeight = baseH;
@@ -583,14 +587,24 @@ function previewRender() {
         canvasWidth = baseW;
         canvasHeight = imgs.reduce((sum, item) => sum + item.height * (baseW / item.width), 0);
     } else {
+        // 自適應網格模式：每一行高度獨立計算
+        cellW = (state.scaleMode === 'fit-first' ? imgs[0].width : Math.max(...imgs.map(i => i.width)));
+        canvasWidth = cellW * cols;
         const rows = Math.ceil(totalImgs / cols);
-        if (state.scaleMode === 'fit-first') {
-            canvasWidth = imgs[0].width * cols;
-            canvasHeight = imgs[0].height * rows;
-        } else {
-            canvasWidth = Math.max(...imgs.map(i => i.width)) * cols;
-            canvasHeight = Math.max(...imgs.map(i => i.height)) * rows;
+        
+        for (let r = 0; r < rows; r++) {
+            let maxRowH = 0;
+            for (let c = 0; c < cols; c++) {
+                const idx = r * cols + c;
+                if (idx < totalImgs) {
+                    const img = imgs[idx];
+                    const h = img.height * (cellW / img.width);
+                    if (h > maxRowH) maxRowH = h;
+                }
+            }
+            rowHeights.push(maxRowH);
         }
+        canvasHeight = rowHeights.reduce((a, b) => a + b, 0);
     }
 
     state.baseWidth = canvasWidth;
@@ -611,15 +625,18 @@ function previewRender() {
     elements.ctx.scale(finalScale, finalScale);
 
     if (effectiveDirection === 'grid') {
+        let currentY = 0;
         const rows = Math.ceil(totalImgs / cols);
-        const cellW = canvasWidth / cols;
-        const cellH = canvasHeight / rows;
-
-        imgs.forEach((item, index) => {
-            const r = Math.floor(index / cols);
-            const c = index % cols;
-            drawImageContain(elements.ctx, item.img, c * cellW, r * cellH, cellW, cellH);
-        });
+        for (let r = 0; r < rows; r++) {
+            const h = rowHeights[r];
+            for (let c = 0; c < cols; c++) {
+                const idx = r * cols + c;
+                if (idx < totalImgs) {
+                    drawImageContain(elements.ctx, imgs[idx].img, c * cellW, currentY, cellW, h);
+                }
+            }
+            currentY += h;
+        }
     } else {
         let offset = 0;
         imgs.forEach(item => {
@@ -644,7 +661,7 @@ function previewRender() {
 }
 
 async function init() {
-    console.log("PicMerger v1.0.14 Initializing...");
+    console.log("PicMerger v1.0.15 Initializing...");
     loadPlugins(); 
     initElements();
     
