@@ -554,6 +554,28 @@ function drawImageCover(ctx, img, x, y, w, h) {
     ctx.drawImage(img, sx, sy, sw, sh, x, y, w, h);
 }
 
+// 輔助函式：等比例縮放繪製 (Contain - 確保絕對不變形，不裁切)
+function drawImageContain(ctx, img, x, y, w, h) {
+    const imgRatio = img.width / img.height;
+    const cellRatio = w / h;
+    let targetW, targetH, targetX, targetY;
+
+    if (imgRatio > cellRatio) {
+        // 圖片比較寬 -> 以寬度為基準縮放
+        targetW = w;
+        targetH = w / imgRatio;
+        targetX = x;
+        targetY = y + (h - targetH) / 2;
+    } else {
+        // 圖片比較高 -> 以高度為基準縮放
+        targetH = h;
+        targetW = h * imgRatio;
+        targetX = x + (w - targetW) / 2;
+        targetY = y;
+    }
+    ctx.drawImage(img, 0, 0, img.width, img.height, targetX, targetY, targetW, targetH);
+}
+
 function previewRender() {
     if (state.images.length < 1) return;
     
@@ -613,7 +635,7 @@ function previewRender() {
         imgs.forEach((item, index) => {
             const r = Math.floor(index / cols);
             const c = index % cols;
-            drawImageCover(elements.ctx, item.img, c * cellW, r * cellH, cellW, cellH);
+            drawImageContain(elements.ctx, item.img, c * cellW, r * cellH, cellW, cellH);
         });
     } else {
         let offset = 0;
@@ -639,7 +661,7 @@ function previewRender() {
 }
 
 async function init() {
-    console.log("PicMerger v1.0.12 Initializing...");
+    console.log("PicMerger v1.0.13 Initializing...");
     loadPlugins(); 
     initElements();
     
