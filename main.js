@@ -16,7 +16,6 @@ let merge_images_fn = null;
 const state = {
     images: [], // 儲存已載入的圖片物件: { img, name, width, height, src }
     direction: 'grid', // 目前預設採用網格佈局 (Grid)
-    alignment: 'center', // 對齊方式: start, center, end
     scaleMode: 'original', // 縮放模式
     bgColor: '#000000', // 畫布背景顏色
     gridCols: 1, // 網格列數
@@ -42,7 +41,6 @@ function initElements() {
         gridColsInput: document.getElementById('grid-cols'),
         outputModeSelect: document.getElementById('output-mode'),
         outputValueInput: document.getElementById('output-value'),
-        alignmentSelect: document.getElementById('alignment'),
         scaleModeSelect: document.getElementById('scale-mode'),
         bgColorInput: document.getElementById('bg-color'),
         canvas: document.getElementById('merge-canvas'),
@@ -61,7 +59,7 @@ function initElements() {
 }
 
 async function init() {
-    console.log("PicMerger v1.0.5 Initializing...");
+    console.log("PicMerger v1.0.8 Initializing...");
     loadPlugins(); 
     initElements();
     
@@ -93,6 +91,7 @@ async function init() {
 function setupEventListeners() {
     // 終極備援：如果一般綁定失效，使用全域點擊代理
     document.addEventListener('click', (e) => {
+        if (elements.fileInput && e.target === elements.fileInput) return;
         const dropZone = e.target.closest('#main-drop-zone');
         if (dropZone && elements.fileInput) {
             console.log("Global Click Delegate Triggered");
@@ -103,6 +102,7 @@ function setupEventListeners() {
     if (elements.dropZone && elements.fileInput) {
         // 標準綁定
         elements.dropZone.addEventListener('click', (e) => {
+            if (e.target === elements.fileInput) return;
             e.stopPropagation();
             elements.fileInput.click();
         });
@@ -145,19 +145,6 @@ function setupEventListeners() {
         });
     }
 
-    // 對齊方式按鈕組
-    const alignGroup = document.getElementById('alignment-group');
-    if (alignGroup) {
-        alignGroup.querySelectorAll('button').forEach(btn => {
-            btn.addEventListener('click', () => {
-                state.alignment = btn.dataset.value;
-                alignGroup.querySelectorAll('button').forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-                previewRender();
-            });
-        });
-    }
-
     // 輸出模式按鈕組
     const modeGroup = document.getElementById('output-mode-group');
     if (modeGroup) {
@@ -189,13 +176,6 @@ function setupEventListeners() {
             const label = document.getElementById('output-value-label');
             if (label) label.textContent = Math.round(val) + (state.outputMode === 'scale' ? '%' : 'px');
             
-            previewRender();
-        });
-    }
-
-    if (elements.alignmentSelect) {
-        elements.alignmentSelect.addEventListener('change', (e) => {
-            state.alignment = e.target.value;
             previewRender();
         });
     }
@@ -606,23 +586,19 @@ function previewRender() {
         if (state.scaleMode === 'fit-first') {
             const baseH = imgs[0].height;
             canvasHeight = baseH;
-            imgs.forEach(item => {
-                canvasWidth += item.width * (baseH / item.height);
-            });
+            canvasWidth = imgs.reduce((sum, item) => sum + item.width * (baseH / item.height), 0);
         } else {
             canvasHeight = Math.max(...imgs.map(i => i.height));
-            canvasWidth = imgs.reduce((sum, i) => sum + i.width, 0);
+            canvasWidth = imgs.reduce((sum, item) => sum + item.width * (canvasHeight / item.height), 0);
         }
     } else if (state.direction === 'vertical') {
         if (state.scaleMode === 'fit-first') {
             const baseW = imgs[0].width;
             canvasWidth = baseW;
-            imgs.forEach(item => {
-                canvasHeight += item.height * (baseW / item.width);
-            });
+            canvasHeight = imgs.reduce((sum, item) => sum + item.height * (baseW / item.width), 0);
         } else {
             canvasWidth = Math.max(...imgs.map(i => i.width));
-            canvasHeight = imgs.reduce((sum, i) => sum + i.height, 0);
+            canvasHeight = imgs.reduce((sum, item) => sum + item.height * (canvasWidth / item.width), 0);
         }
     } else if (state.direction === 'grid') {
         const cols = state.gridCols;
@@ -665,52 +641,29 @@ function previewRender() {
             const r = Math.floor(index / cols);
             const c = index % cols;
             
-            const scaleW = cellW / item.width;
-            const scaleH = cellH / item.height;
-            const fitScale = (state.scaleMode === 'fit-first') ? Math.min(scaleW, scaleH) : Math.min(scaleW, scaleH);
-            // Actually in grid, we always fit to cell
-            
-            const drawW = item.width * fitScale;
-            const drawH = item.height * fitScale;
-
+            const drawW = cellW;
+            const drawH = cellH;
             let x = c * cellW;
             let y = r * cellH;
 
-            if (state.alignment === 'center') {
-                x += (cellW - drawW) / 2;
-                y += (cellH - drawH) / 2;
-            } else if (state.alignment === 'end') {
-                x += (cellW - drawW);
-                y += (cellH - drawH);
-            }
             elements.ctx.drawImage(item.img, x, y, drawW, drawH);
         });
     } else {
         let offset = 0;
         imgs.forEach(item => {
-            let drawW = item.width;
-            let drawH = item.height;
-            let x = 0, y = 0;
+            let drawW, drawH, x, y;
 
             if (state.direction === 'horizontal') {
-                if (state.scaleMode === 'fit-first') {
-                    const scale = canvasHeight / item.height;
-                    drawW *= scale;
-                    drawH *= scale;
-                }
+                drawH = canvasHeight;
+                drawW = item.width * (canvasHeight / item.height);
                 x = offset;
-                if (state.alignment === 'center') y = (canvasHeight - drawH) / 2;
-                else if (state.alignment === 'end') y = canvasHeight - drawH;
+                y = 0;
                 offset += drawW;
             } else {
-                if (state.scaleMode === 'fit-first') {
-                    const scale = canvasWidth / item.width;
-                    drawW *= scale;
-                    drawH *= scale;
-                }
+                drawW = canvasWidth;
+                drawH = item.height * (canvasWidth / item.width);
+                x = 0;
                 y = offset;
-                if (state.alignment === 'center') x = (canvasWidth - drawW) / 2;
-                else if (state.alignment === 'end') x = canvasWidth - drawW;
                 offset += drawH;
             }
             elements.ctx.drawImage(item.img, x, y, drawW, drawH);
@@ -765,7 +718,7 @@ async function render() {
                 combinedData,
                 offsets,
                 dirMap[state.direction],
-                alignMap[state.alignment],
+                1, // Default to center since alignment is removed
                 state.gridCols,
                 r, g, b
             );
