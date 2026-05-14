@@ -125,40 +125,40 @@
         })) : console.error("Drop zone or file input not found!"), e.gridColsInput && e.gridColsInput.addEventListener("input", (t)=>{
             o.gridCols = parseInt(t.target.value) || 1;
             const a = document.getElementById("grid-cols-value");
-            a && (a.textContent = o.gridCols), y(!1), I();
+            a && (a.textContent = o.gridCols), y(!1), S();
         });
         const n = document.getElementById("output-mode-group");
         n && n.querySelectorAll("button").forEach((t)=>{
             t.addEventListener("click", ()=>{
-                o.outputMode = t.dataset.value, o.outputScale = 100, n.querySelectorAll("button").forEach((a)=>a.classList.remove("active")), t.classList.add("active"), y(!1), C(), I();
+                o.outputMode = t.dataset.value, o.outputScale = 100, n.querySelectorAll("button").forEach((a)=>a.classList.remove("active")), t.classList.add("active"), y(!1), C(), S();
             });
         }), e.outputValueInput && e.outputValueInput.addEventListener("input", (t)=>{
             const a = parseFloat(t.target.value);
             if (!a) return;
             o.outputMode === "scale" ? o.outputScale = a : o.outputMode === "width" && o.baseWidth ? o.outputScale = a / o.baseWidth * 100 : o.outputMode === "height" && o.baseHeight && (o.outputScale = a / o.baseHeight * 100);
             const i = document.getElementById("output-value-label");
-            i && (i.textContent = Math.round(a) + (o.outputMode === "scale" ? "%" : "px")), y(!1), I();
+            i && (i.textContent = Math.round(a) + (o.outputMode === "scale" ? "%" : "px")), y(!1), S();
         }), e.scaleModeSelect && e.scaleModeSelect.addEventListener("change", (t)=>{
-            o.scaleMode = t.target.value, y(!1), I();
+            o.scaleMode = t.target.value, y(!1), S();
         }), e.bgColorInput && e.bgColorInput.addEventListener("change", (t)=>{
-            o.bgColor = t.target.value, y(!1), I();
+            o.bgColor = t.target.value, y(!1), S();
         }), e.btnMerge && e.btnMerge.addEventListener("click", async ()=>{
             if (!(o.images.length < 2)) {
                 if (o.isMerged) {
-                    k();
+                    T();
                     return;
                 }
-                e.btnMerge.disabled = !0, e.btnMerge.textContent = "正在渲染畫布...", setTimeout(()=>{
+                e.btnMerge.disabled = !0, e.btnMerge.textContent = "正在渲染畫布...", setTimeout(async ()=>{
                     try {
-                        ne(), y(!0);
+                        await ne(), y(!0);
                     } catch (t) {
-                        alert("渲染失敗: " + t.message), y(!1);
+                        console.error("Render error:", t), alert("渲染失敗: " + t.message), y(!1);
                     } finally{
                         e.btnMerge.disabled = !1;
                     }
                 }, 100);
             }
-        }), e.btnReset && e.btnReset.addEventListener("click", oe), e.btnSave && e.btnSave.addEventListener("click", k), e.btnShare && e.btnShare.addEventListener("click", ae), e.canvasWrapper && e.canvasWrapper.addEventListener("click", ()=>{
+        }), e.btnReset && e.btnReset.addEventListener("click", oe), e.btnSave && e.btnSave.addEventListener("click", T), e.btnShare && e.btnShare.addEventListener("click", ae), e.canvasWrapper && e.canvasWrapper.addEventListener("click", ()=>{
             o.images.length > 0 && ee();
         }), e.btnCloseModal && e.btnCloseModal.addEventListener("click", x), e.sortModal && e.sortModal.addEventListener("click", (t)=>{
             t.target === e.sortModal && x();
@@ -167,7 +167,7 @@
         });
     }
     function y(n) {
-        o.isMerged = n, e.btnMerge && (n ? (e.btnMerge.textContent = "💾 儲存合併圖", e.btnMerge.classList.add("btn-save-mode")) : (e.btnMerge.textContent = "生成合併圖", e.btnMerge.classList.remove("btn-save-mode")));
+        o.isMerged = n, e.btnMerge && (n ? (e.btnMerge.textContent = "💾 儲存合併圖", e.btnMerge.classList.add("btn-save-mode"), e.btnSave && (e.btnSave.style.display = "none")) : (e.btnMerge.textContent = "生成合併圖", e.btnMerge.classList.remove("btn-save-mode"), e.btnSave && (e.btnSave.style.display = "block")));
     }
     async function R(n) {
         if (console.log("Handling files:", n ? n.length : 0), !n || n.length === 0) return;
@@ -201,18 +201,18 @@
         t.length > 0 && (o.images = [
             ...o.images,
             ...t
-        ], S(), y(!1), e.previewInfo.textContent = `已載入 ${o.images.length} 張圖片。`, e.downloadSection.style.display = "none", setTimeout(()=>{
-            console.log("Auto-triggering preview..."), I();
+        ], I(), y(!1), e.previewInfo.textContent = `已載入 ${o.images.length} 張圖片。`, e.downloadSection.style.display = "none", setTimeout(()=>{
+            console.log("Auto-triggering preview..."), S();
         }, 100));
     }
-    function S() {
+    function I() {
         e.fileCount.textContent = o.images.length, e.imageList.innerHTML = "", o.images.forEach((n, t)=>{
             const a = document.createElement("div");
             a.className = "image-item", a.draggable = !0, a.dataset.index = t, a.innerHTML = `
             <img src="${n.src}" alt="Thumb" />
             <button class="btn-remove" title="移除圖片">✕</button>
         `, a.querySelector(".btn-remove").addEventListener("click", (i)=>{
-                i.stopPropagation(), URL.revokeObjectURL(o.images[t].src), o.images.splice(t, 1), S(), y(!1), e.downloadSection.style.display = "none";
+                i.stopPropagation(), URL.revokeObjectURL(o.images[t].src), o.images.splice(t, 1), I(), y(!1), e.downloadSection.style.display = "none";
             }), a.addEventListener("dragstart", H), a.addEventListener("dragover", A), a.addEventListener("drop", j), a.addEventListener("dragend", _), a.addEventListener("dragenter", N), a.addEventListener("dragleave", O), a.addEventListener("touchstart", z, {
                 passive: !1
             }), a.addEventListener("touchmove", V, {
@@ -276,7 +276,7 @@
         const t = parseInt(this.dataset.index);
         if (L !== t) {
             const a = o.images.splice(L, 1)[0];
-            o.images.splice(t, 0, a), S(), D(), e.downloadSection.style.display === "block" && I();
+            o.images.splice(t, 0, a), I(), D(), e.downloadSection.style.display === "block" && S();
         }
         return !1;
     }
@@ -304,19 +304,19 @@
             const t = parseInt(E.dataset.index);
             if (E.classList.remove("drag-over"), L !== null && !isNaN(t) && L !== t) {
                 const a = o.images.splice(L, 1)[0];
-                o.images.splice(t, 0, a), S(), D(), e.downloadSection.style.display === "block" && I();
+                o.images.splice(t, 0, a), I(), D(), e.downloadSection.style.display === "block" && S();
             }
         }
         E = null, L = null, document.querySelectorAll(".image-item, .sort-item").forEach((t)=>{
             t.classList.remove("dragging", "drag-over"), t.style.pointerEvents = "auto";
         });
     }
-    function T(n, t, a, i, r, l) {
+    function k(n, t, a, i, r, l) {
         const f = t.width / t.height, u = r / l;
         let b, v, m, d;
         f > u ? (b = r, v = r / f, m = a, d = i + (l - v) / 2) : (v = l, b = l * f, m = a + (r - b) / 2, d = i), n.drawImage(t, 0, 0, t.width, t.height, m, d, b, v);
     }
-    function I() {
+    function S() {
         if (o.images.length < 1) return;
         const n = o.images;
         let t = 0, a = 0;
@@ -356,7 +356,7 @@
                 const h = f[c];
                 for(let g = 0; g < i; g++){
                     const p = c * i + g;
-                    p < r && T(e.ctx, n[p].img, g * u, d, u, h);
+                    p < r && k(e.ctx, n[p].img, g * u, d, u, h);
                 }
                 d += h;
             }
@@ -364,13 +364,13 @@
             let d = 0;
             n.forEach((s)=>{
                 let c, h, g, p;
-                l === "horizontal" ? (h = a, c = s.width * (a / s.height), g = d, p = 0, d += c) : (c = t, h = s.height * (t / s.width), g = 0, p = d, d += h), T(e.ctx, s.img, g, p, c, h);
+                l === "horizontal" ? (h = a, c = s.width * (a / s.height), g = d, p = 0, d += c) : (c = t, h = s.height * (t / s.width), g = 0, p = d, d += h), k(e.ctx, s.img, g, p, c, h);
             });
         }
         e.ctx.restore(), e.downloadSection.style.display = "block", e.previewInfo.textContent = `即時預覽中... 解析度: ${Math.round(v)} x ${Math.round(m)}`, C();
     }
     async function te() {
-        console.log("PicMerger v1.0.15 Initializing..."), X(), W(), e.btnShare && (window.Capacitor && window.Capacitor.isNativePlatform() && o.canShare ? (e.btnShare.style.setProperty("display", "block", "important"), e.btnShare.disabled = !1) : e.btnShare.style.setProperty("display", "none", "important")), K(), console.log("Event listeners attached.");
+        console.log("PicMerger v1.0.17 Initializing..."), X(), W(), e.btnShare && (window.Capacitor && window.Capacitor.isNativePlatform() && o.canShare ? (e.btnShare.style.setProperty("display", "block", "important"), e.btnShare.disabled = !1) : e.btnShare.style.setProperty("display", "none", "important")), K(), console.log("Event listeners attached.");
         try {
             const { default: n, merge_images: t } = await G(async ()=>{
                 const { default: a, merge_images: i } = await import("./pic_wasm-C60cSF7V.js");
@@ -395,7 +395,7 @@
                 };
                 let t = n[o.direction], a = !1;
                 if (o.direction === "grid" && (o.gridCols === 1 ? t = n.vertical : o.gridCols === o.images.length ? t = n.horizontal : a = !0), a || !P) {
-                    console.info("使用 JS 高品質引擎渲染 (Contain)..."), I();
+                    console.info("使用 JS 高品質引擎渲染 (Contain)..."), S();
                     const p = e.canvas.toDataURL("image/png"), w = await (await fetch(p)).blob(), M = URL.createObjectURL(w);
                     e.downloadSection.style.display = "block", e.btnShare && (e.btnShare.disabled = !o.canShare), e.previewInfo.textContent = `處理完成！解析度: ${e.canvas.width}x${e.canvas.height} (完整顯示)`, e.btnMerge.disabled = !1, C();
                     return;
@@ -419,7 +419,7 @@
             }
         }
     }
-    async function k() {
+    async function T() {
         try {
             e.btnSave.disabled = !0, e.btnSave.textContent = "正在儲存至外部儲存...";
             const n = e.canvas.toDataURL("image/png", .9);
@@ -473,7 +473,7 @@
         }
     }
     function oe() {
-        o.images.forEach((n)=>URL.revokeObjectURL(n.src)), o.images = [], S(), y(!1), e.ctx.clearRect(0, 0, e.canvas.width, e.canvas.height), e.previewInfo.textContent = "請上傳圖片以開始", e.downloadSection.style.display = "none", e.fileInput.value = "";
+        o.images.forEach((n)=>URL.revokeObjectURL(n.src)), o.images = [], I(), y(!1), e.ctx.clearRect(0, 0, e.canvas.width, e.canvas.height), e.previewInfo.textContent = "請上傳圖片以開始", e.downloadSection.style.display = "none", e.fileInput.value = "";
     }
     window.addEventListener("dragover", (n)=>n.preventDefault(), !1);
     window.addEventListener("drop", (n)=>n.preventDefault(), !1);
